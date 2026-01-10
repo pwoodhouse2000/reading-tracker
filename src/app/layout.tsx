@@ -46,6 +46,12 @@ export default function RootLayout({
                   >
                     Reports
                   </Link>
+                  <Link
+                    href="/settings/todoist"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                  >
+                    Settings
+                  </Link>
                 </nav>
               </div>
             </div>
