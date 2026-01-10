@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Core Reading Entry
+model Book {
+  id                String      @id @default(cuid())
+  title             String
+  author            String
+  mediaType         MediaType
+  status            ReadingStatus
+  rating            Int?        // 1-5 stars, nullable until finished
+  dateStarted       DateTime?
+  dateFinished      DateTime?
+  category          Category
+  subCategory       String?
+  summary           String?     // From book API
+  coverImageUrl     String?     // From book API
+  isbn              String?     // For API lookups
+  apiSource         String?     // 'open_library' | 'google_books'
+
+  // User content
+  notes             Note[]
+  thoughts          String?     // User's overall thoughts
+
+  // Priority management
+  priority          Int?        // For "To Read" items, lower = higher priority
+
+  // Integration tracking
+  todoistTaskId     String?     @unique
+  todoistSyncedAt   DateTime?
+
+  // Notion import tracking
+  notionPageId      String?     @unique
+  importedFromNotion Boolean   @default(false)
+
+  // Metadata
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([dateFinished])
+  @@index([priority])
+}
+
+// Separate notes for better organization
+model Note {
+  id        String   @id @default(cuid())
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  content   String
+  page      Int?     // Optional page reference
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([bookId])
+}
+
+// Todoist sync state
+model TodoistSync {
+  id            String   @id @default(cuid())
+  projectId     String   // "Stuff to Read" project ID
+  lastSyncedAt  DateTime
+  syncStatus    String   // 'success' | 'partial' | 'error'
+  errorMessage  String?
+  itemsSynced   Int      @default(0)
+}
+
+// Notion import history (one-time)
+model NotionImport {
+  id            String   @id @default(cuid())
+  importedAt    DateTime @default(now())
+  itemsImported Int
+  status        String   // 'success' | 'partial' | 'error'
+  errorDetails  String?
+}
+
+// Enums
+enum MediaType {
+  PAPER
+  AUDIOBOOK
+  EBOOK
+}
+
+enum ReadingStatus {
+  TO_READ
+  NEXT_UP
+  READING
+  PAUSED
+  FINISHED
+}
+
+enum Category {
+  FICTION
+  NON_FICTION
+}
