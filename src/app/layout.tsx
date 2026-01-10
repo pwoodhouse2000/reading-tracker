@@ -40,6 +40,12 @@ export default function RootLayout({
                   >
                     Books
                   </Link>
+                  <Link
+                    href="/reports"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                  >
+                    Reports
+                  </Link>
                 </nav>
               </div>
             </div>
