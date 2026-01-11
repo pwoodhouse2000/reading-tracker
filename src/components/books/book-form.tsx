@@ -29,6 +29,7 @@ interface BookFormProps {
     coverImageUrl: string | null;
     isbn: string | null;
     rating: number | null;
+    priority: number | null;
   };
   mode: 'create' | 'edit';
 }
@@ -52,6 +53,7 @@ export function BookForm({ book, mode }: BookFormProps) {
     coverImageUrl: book?.coverImageUrl || '',
     isbn: book?.isbn || '',
     rating: book?.rating || null,
+    priority: book?.priority || null,
   });
 
   // Debounced search effect
@@ -113,9 +115,12 @@ export function BookForm({ book, mode }: BookFormProps) {
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) => {
+    const value = e.target.type === 'number' 
+      ? (e.target.value === '' ? null : parseInt(e.target.value))
+      : e.target.value;
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [e.target.name]: value,
     }));
   };
 
@@ -171,6 +176,11 @@ export function BookForm({ book, mode }: BookFormProps) {
     setFormData((prev) => ({ ...prev, rating }));
   };
 
+  // Common input class for consistent styling
+  const inputClass = "w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all bg-white text-gray-900";
+  const textareaClass = "w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all resize-none bg-white text-gray-900";
+  const selectClass = "w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all bg-white text-gray-900";
+
   return (
     <Card className="border-0 shadow-xl bg-white/90 backdrop-blur">
       <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-primary/5 to-accent/5">
@@ -195,19 +205,19 @@ export function BookForm({ book, mode }: BookFormProps) {
             </div>
             <div className="relative">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by title, author, or ISBN..."
-                  className="w-full pl-12 pr-12 py-3 border-2 border-transparent bg-white rounded-xl shadow-sm focus:border-blue-300 focus:ring-0 transition-all"
+                  className="w-full pl-12 pr-12 py-3 border-2 border-transparent bg-white rounded-xl shadow-sm focus:border-blue-300 focus:ring-0 transition-all text-gray-900 placeholder-gray-400"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={clearSearch}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -232,12 +242,12 @@ export function BookForm({ book, mode }: BookFormProps) {
               {showResults && (
                 <div className="absolute z-20 w-full mt-2 bg-white border-2 border-gray-100 rounded-xl shadow-2xl max-h-96 overflow-y-auto">
                   {searching ? (
-                    <div className="p-6 text-center text-muted-foreground">
+                    <div className="p-6 text-center text-gray-500">
                       <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
                       Searching...
                     </div>
                   ) : searchResults.length === 0 ? (
-                    <div className="p-6 text-center text-muted-foreground">
+                    <div className="p-6 text-center text-gray-500">
                       No books found. Try a different search term.
                     </div>
                   ) : (
@@ -261,14 +271,14 @@ export function BookForm({ book, mode }: BookFormProps) {
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm line-clamp-2">
+                            <div className="font-semibold text-sm text-gray-900 line-clamp-2">
                               {result.title}
                             </div>
-                            <div className="text-sm text-muted-foreground mt-0.5">
+                            <div className="text-sm text-gray-600 mt-0.5">
                               by {result.author}
                             </div>
                             {result.summary && (
-                              <div className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                              <div className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">
                                 {result.summary}
                               </div>
                             )}
@@ -299,7 +309,7 @@ export function BookForm({ book, mode }: BookFormProps) {
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-2 text-muted-foreground">
+                <label className="block text-sm font-medium mb-2 text-gray-600">
                   Cover Image URL
                 </label>
                 <input
@@ -307,7 +317,7 @@ export function BookForm({ book, mode }: BookFormProps) {
                   name="coverImageUrl"
                   value={formData.coverImageUrl}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all text-sm"
+                  className={inputClass + " text-sm"}
                   placeholder="https://..."
                 />
               </div>
@@ -317,7 +327,7 @@ export function BookForm({ book, mode }: BookFormProps) {
           {/* Title and Author */}
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
                 Title <span className="text-red-500">*</span>
               </label>
               <input
@@ -326,13 +336,13 @@ export function BookForm({ book, mode }: BookFormProps) {
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all"
+                className={inputClass}
                 placeholder="Enter book title"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
                 Author <span className="text-red-500">*</span>
               </label>
               <input
@@ -341,7 +351,7 @@ export function BookForm({ book, mode }: BookFormProps) {
                 value={formData.author}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all"
+                className={inputClass}
                 placeholder="Enter author name"
               />
             </div>
@@ -349,7 +359,7 @@ export function BookForm({ book, mode }: BookFormProps) {
 
           {/* Rating */}
           <div>
-            <label className="block text-sm font-semibold mb-3">
+            <label className="block text-sm font-semibold mb-3 text-gray-700">
               Rating
             </label>
             <div className="flex items-center gap-2">
@@ -373,7 +383,7 @@ export function BookForm({ book, mode }: BookFormProps) {
                 <button
                   type="button"
                   onClick={() => setRating(null)}
-                  className="ml-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className="ml-3 text-sm text-gray-500 hover:text-gray-700 transition-colors"
                 >
                   Clear
                 </button>
@@ -381,17 +391,17 @@ export function BookForm({ book, mode }: BookFormProps) {
             </div>
           </div>
 
-          {/* Type, Status, Category */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Type, Status, Category, Priority */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
                 Media Type
               </label>
               <select
                 name="mediaType"
                 value={formData.mediaType}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all bg-white"
+                className={selectClass}
               >
                 <option value="PAPER">📖 Paper</option>
                 <option value="AUDIOBOOK">🎧 Audiobook</option>
@@ -400,14 +410,14 @@ export function BookForm({ book, mode }: BookFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
                 Status
               </label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all bg-white"
+                className={selectClass}
               >
                 <option value="TO_READ">📋 To Read</option>
                 <option value="NEXT_UP">⏳ Next Up</option>
@@ -418,23 +428,38 @@ export function BookForm({ book, mode }: BookFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2">
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
                 Category
               </label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all bg-white"
+                className={selectClass}
               >
                 <option value="FICTION">Fiction</option>
                 <option value="NON_FICTION">Non-Fiction</option>
               </select>
             </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
+                Priority
+              </label>
+              <input
+                type="number"
+                name="priority"
+                value={formData.priority ?? ''}
+                onChange={handleChange}
+                min="1"
+                className={inputClass}
+                placeholder="1 = highest"
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label className="block text-sm font-semibold mb-2 text-gray-700">
               Sub-category
             </label>
             <input
@@ -443,12 +468,12 @@ export function BookForm({ book, mode }: BookFormProps) {
               value={formData.subCategory}
               onChange={handleChange}
               placeholder="e.g., Science Fiction, Biography, Self-Help..."
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all"
+              className={inputClass}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label className="block text-sm font-semibold mb-2 text-gray-700">
               Summary
             </label>
             <textarea
@@ -457,12 +482,12 @@ export function BookForm({ book, mode }: BookFormProps) {
               onChange={handleChange}
               rows={4}
               placeholder="Book description or synopsis..."
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all resize-none"
+              className={textareaClass}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2">
+            <label className="block text-sm font-semibold mb-2 text-gray-700">
               My Thoughts
             </label>
             <textarea
@@ -471,7 +496,7 @@ export function BookForm({ book, mode }: BookFormProps) {
               onChange={handleChange}
               rows={4}
               placeholder="Your personal thoughts about this book..."
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all resize-none"
+              className={textareaClass}
             />
           </div>
 
