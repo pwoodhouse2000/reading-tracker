@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { BookCard } from './book-card';
 import { Button } from '@/components/ui/button';
+import { Search, X, Sparkles, LayoutGrid, List } from 'lucide-react';
 
 interface Book {
   id: string;
@@ -23,12 +24,12 @@ interface BookListProps {
 }
 
 const statusFilters = [
-  { label: 'All', value: null },
-  { label: 'To Read', value: 'TO_READ' },
-  { label: 'Next Up', value: 'NEXT_UP' },
-  { label: 'Reading', value: 'READING' },
-  { label: 'Paused', value: 'PAUSED' },
-  { label: 'Finished', value: 'FINISHED' },
+  { label: 'All', value: null, emoji: '📚' },
+  { label: 'Reading', value: 'READING', emoji: '📖' },
+  { label: 'Next Up', value: 'NEXT_UP', emoji: '⏳' },
+  { label: 'To Read', value: 'TO_READ', emoji: '📋' },
+  { label: 'Paused', value: 'PAUSED', emoji: '⏸️' },
+  { label: 'Finished', value: 'FINISHED', emoji: '✅' },
 ] as const;
 
 const statusOrder = {
@@ -44,6 +45,8 @@ export function BookList({ books }: BookListProps) {
   const [groupByStatus, setGroupByStatus] = useState(true);
   const [sortBy, setSortBy] = useState<'title' | 'author' | 'rating' | 'recent' | 'priority'>('priority');
   const [enriching, setEnriching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
 
   const handleEnrich = async () => {
     setEnriching(true);
@@ -71,9 +74,21 @@ export function BookList({ books }: BookListProps) {
   };
 
   const sortedAndGroupedBooks = useMemo(() => {
-    let filtered = statusFilter
-      ? books.filter((book) => book.status === statusFilter)
-      : books;
+    // First filter by search query
+    let filtered = books.filter((book) => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        book.title.toLowerCase().includes(query) ||
+        book.author.toLowerCase().includes(query) ||
+        book.summary?.toLowerCase().includes(query)
+      );
+    });
+
+    // Then filter by status
+    if (statusFilter) {
+      filtered = filtered.filter((book) => book.status === statusFilter);
+    }
 
     // Sort function
     const sortBooks = (booksToSort: Book[]) => {
@@ -87,16 +102,16 @@ export function BookList({ books }: BookListProps) {
             if (a.rating === b.rating) return 0;
             if (a.rating === null) return 1;
             if (b.rating === null) return -1;
-            return b.rating - a.rating; // Highest rating first
+            return b.rating - a.rating;
           case 'recent':
             const dateA = new Date(a.createdAt).getTime();
             const dateB = new Date(b.createdAt).getTime();
-            return dateB - dateA; // Most recent first
+            return dateB - dateA;
           case 'priority':
             if (a.priority === b.priority) return 0;
             if (a.priority === null) return 1;
             if (b.priority === null) return -1;
-            return a.priority - b.priority; // Lower number = higher priority
+            return a.priority - b.priority;
           default:
             return 0;
         }
@@ -122,10 +137,34 @@ export function BookList({ books }: BookListProps) {
     });
 
     return { grouped: true, booksByStatus: grouped };
-  }, [books, statusFilter, groupByStatus, sortBy]);
+  }, [books, statusFilter, groupByStatus, sortBy, searchQuery]);
+
+  const totalFiltered = sortedAndGroupedBooks.grouped
+    ? Object.values(sortedAndGroupedBooks.booksByStatus || {}).flat().length
+    : sortedAndGroupedBooks.books.length;
 
   return (
     <div className="space-y-6">
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by title, author, or keywords..."
+          className="w-full pl-12 pr-12 py-3 bg-white border-2 border-transparent rounded-xl shadow-sm focus:border-primary focus:ring-0 transition-all text-base"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
       {/* Controls */}
       <div className="space-y-4">
         {/* Status Filters */}
@@ -135,13 +174,14 @@ export function BookList({ books }: BookListProps) {
               <button
                 key={filter.label}
                 onClick={() => setStatusFilter(filter.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
                   statusFilter === filter.value
-                    ? 'bg-primary text-primary-foreground shadow-md'
-                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-primary text-primary-foreground shadow-md scale-105'
+                    : 'bg-white/80 backdrop-blur border border-white/20 text-gray-700 hover:bg-white hover:shadow-sm'
                 }`}
               >
-                {filter.label}
+                <span>{filter.emoji}</span>
+                <span>{filter.label}</span>
               </button>
             ))}
           </div>
@@ -149,73 +189,119 @@ export function BookList({ books }: BookListProps) {
             onClick={handleEnrich}
             disabled={enriching}
             variant="outline"
+            className="rounded-xl border-2"
           >
-            {enriching ? 'Enriching...' : '✨ Add Covers & Summaries'}
+            <Sparkles className={`h-4 w-4 mr-2 ${enriching ? 'animate-pulse' : ''}`} />
+            {enriching ? 'Enriching...' : 'Add Covers & Summaries'}
           </Button>
         </div>
 
-        {/* Sort and Group Controls */}
-        <div className="flex items-center gap-4 flex-wrap bg-gray-50 p-4 rounded-lg">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Group by Status:</label>
-            <button
-              onClick={() => setGroupByStatus(!groupByStatus)}
-              className={`px-3 py-1 rounded text-sm font-medium transition-all ${
-                groupByStatus
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-white border border-gray-300 text-gray-700'
-              }`}
-            >
-              {groupByStatus ? 'On' : 'Off'}
-            </button>
+        {/* Sort and View Controls */}
+        <div className="flex items-center justify-between gap-4 flex-wrap bg-white/60 backdrop-blur p-4 rounded-xl border border-white/20">
+          <div className="flex items-center gap-6 flex-wrap">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-600">Group by Status</label>
+              <button
+                onClick={() => setGroupByStatus(!groupByStatus)}
+                className={`w-12 h-6 rounded-full transition-all relative ${
+                  groupByStatus ? 'bg-primary' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow ${
+                    groupByStatus ? 'left-7' : 'left-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-600">Sort by</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              >
+                <option value="priority">Priority</option>
+                <option value="title">Title (A-Z)</option>
+                <option value="author">Author (A-Z)</option>
+                <option value="rating">Rating (High-Low)</option>
+                <option value="recent">Recently Added</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Sort by:</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-3 py-1 border rounded text-sm"
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-lg transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
             >
-              <option value="priority">Priority</option>
-              <option value="title">Title (A-Z)</option>
-              <option value="author">Author (A-Z)</option>
-              <option value="rating">Rating (High-Low)</option>
-              <option value="recent">Recently Added</option>
-            </select>
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('compact')}
+              className={`p-2 rounded-lg transition-all ${
+                viewMode === 'compact'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-white text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <List className="h-4 w-4" />
+            </button>
           </div>
         </div>
+
+        {/* Results count */}
+        {searchQuery && (
+          <p className="text-sm text-muted-foreground">
+            Found <span className="font-semibold text-foreground">{totalFiltered}</span> books
+            matching "<span className="font-medium">{searchQuery}</span>"
+          </p>
+        )}
       </div>
 
       {/* Books Display */}
-      {books.length === 0 ? (
-        <div className="text-center py-24">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-            <span className="text-3xl">📚</span>
+      {totalFiltered === 0 ? (
+        <div className="text-center py-24 bg-white/60 backdrop-blur rounded-2xl">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 mb-6">
+            <span className="text-4xl">📚</span>
           </div>
-          <p className="text-lg font-medium text-gray-900">No books found</p>
-          <p className="text-sm text-muted-foreground mt-1">Try selecting a different filter</p>
+          <p className="text-xl font-medium text-gray-900">No books found</p>
+          <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+            {searchQuery
+              ? `No books match "${searchQuery}". Try a different search term.`
+              : 'Try selecting a different filter or add some books to get started.'}
+          </p>
         </div>
       ) : sortedAndGroupedBooks.grouped ? (
         // Grouped by status
-        <div className="space-y-8">
+        <div className="space-y-10">
           {Object.entries(statusOrder)
             .filter(([status]) => sortedAndGroupedBooks.booksByStatus?.[status]?.length > 0)
-            .map(([status, order]) => {
-              const books = sortedAndGroupedBooks.booksByStatus![status];
-              const statusLabel = statusFilters.find(f => f.value === status)?.label || status;
+            .map(([status]) => {
+              const statusBooks = sortedAndGroupedBooks.booksByStatus![status];
+              const statusInfo = statusFilters.find(f => f.value === status);
 
               return (
                 <div key={status}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <h2 className="text-2xl font-bold">{statusLabel}</h2>
-                    <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
-                      {books.length}
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="text-2xl">{statusInfo?.emoji}</span>
+                    <h2 className="text-2xl font-bold text-gray-900">{statusInfo?.label || status}</h2>
+                    <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-semibold">
+                      {statusBooks.length}
                     </span>
                   </div>
-                  <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                    {books.map((book) => (
-                      <BookCard key={book.id} book={book} />
+                  <div className={
+                    viewMode === 'grid'
+                      ? 'grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+                      : 'space-y-3'
+                  }>
+                    {statusBooks.map((book) => (
+                      <BookCard key={book.id} book={book} compact={viewMode === 'compact'} />
                     ))}
                   </div>
                 </div>
@@ -224,9 +310,13 @@ export function BookList({ books }: BookListProps) {
         </div>
       ) : (
         // Not grouped - single list
-        <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div className={
+          viewMode === 'grid'
+            ? 'grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+            : 'space-y-3'
+        }>
           {sortedAndGroupedBooks.books.map((book: Book) => (
-            <BookCard key={book.id} book={book} />
+            <BookCard key={book.id} book={book} compact={viewMode === 'compact'} />
           ))}
         </div>
       )}

@@ -1,24 +1,38 @@
 import { Badge } from '@/components/ui/badge';
 
-type ReadingStatus = 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED';
-
 interface StatusBadgeProps {
-  status: ReadingStatus;
+  status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED';
 }
 
-const statusConfig: Record<
-  ReadingStatus,
-  { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
-> = {
-  TO_READ: { label: 'To Read', variant: 'outline' },
-  NEXT_UP: { label: 'Next Up', variant: 'secondary' },
-  READING: { label: 'Reading', variant: 'default' },
-  PAUSED: { label: 'Paused', variant: 'destructive' },
-  FINISHED: { label: 'Finished', variant: 'secondary' },
+const statusConfig = {
+  TO_READ: {
+    label: 'To Read',
+    className: 'bg-slate-100/90 text-slate-700 border-slate-200 backdrop-blur-sm',
+  },
+  NEXT_UP: {
+    label: 'Next Up',
+    className: 'bg-amber-100/90 text-amber-800 border-amber-200 backdrop-blur-sm',
+  },
+  READING: {
+    label: 'Reading',
+    className: 'bg-blue-100/90 text-blue-800 border-blue-200 backdrop-blur-sm',
+  },
+  PAUSED: {
+    label: 'Paused',
+    className: 'bg-orange-100/90 text-orange-800 border-orange-200 backdrop-blur-sm',
+  },
+  FINISHED: {
+    label: 'Finished',
+    className: 'bg-emerald-100/90 text-emerald-800 border-emerald-200 backdrop-blur-sm',
+  },
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
   const config = statusConfig[status];
 
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  return (
+    <Badge className={`${config.className} border text-xs font-medium shadow-sm`}>
+      {config.label}
+    </Badge>
+  );
 }

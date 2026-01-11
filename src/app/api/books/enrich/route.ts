@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { searchBooks } from '@/lib/services/book-api';
+import { enrichBook } from '@/lib/services/book-api';
 
 // POST /api/books/enrich
 // Enrich all books (or specific book) with cover images and summaries
@@ -16,7 +16,9 @@ export async function POST(request: NextRequest) {
           where: {
             OR: [
               { coverImageUrl: null },
+              { coverImageUrl: '' },
               { summary: null },
+              { summary: '' },
             ],
           },
           take: 50, // Process 50 at a time to avoid timeout
@@ -24,6 +26,7 @@ export async function POST(request: NextRequest) {
 
     let enriched = 0;
     let skipped = 0;
+    const results: { title: string; status: string }[] = [];
 
     for (const book of books) {
       if (!book) continue;
@@ -31,45 +34,64 @@ export async function POST(request: NextRequest) {
       // Skip if already has both cover and summary
       if (book.coverImageUrl && book.summary) {
         skipped++;
+        results.push({ title: book.title, status: 'already_complete' });
         continue;
       }
 
       try {
-        // Search for book info
-        const results = await searchBooks(`${book.title} ${book.author}`);
+        // Use the improved enrichment function that queries both APIs
+        const enrichmentData = await enrichBook(book.title, book.author);
 
-        if (results.length > 0) {
-          const bookInfo = results[0];
+        if (enrichmentData && (enrichmentData.summary || enrichmentData.coverImageUrl)) {
+          // Only update fields that are currently missing
+          const updateData: Record<string, string> = {};
+          
+          if (!book.coverImageUrl && enrichmentData.coverImageUrl) {
+            updateData.coverImageUrl = enrichmentData.coverImageUrl;
+          }
+          if (!book.summary && enrichmentData.summary) {
+            updateData.summary = enrichmentData.summary;
+          }
+          if (enrichmentData.apiSource) {
+            updateData.apiSource = enrichmentData.apiSource;
+          }
 
-          // Update book with new info
-          await prisma.book.update({
-            where: { id: book.id },
-            data: {
-              coverImageUrl: book.coverImageUrl || bookInfo.coverImageUrl,
-              summary: book.summary || bookInfo.summary,
-              isbn: book.isbn || bookInfo.isbn,
-              apiSource: bookInfo.apiSource || 'open_library',
-            },
-          });
+          if (Object.keys(updateData).length > 0) {
+            await prisma.book.update({
+              where: { id: book.id },
+              data: updateData,
+            });
 
-          enriched++;
+            enriched++;
+            results.push({ 
+              title: book.title, 
+              status: 'enriched',
+            });
+          } else {
+            skipped++;
+            results.push({ title: book.title, status: 'no_new_data' });
+          }
         } else {
           skipped++;
+          results.push({ title: book.title, status: 'not_found' });
         }
       } catch (error) {
         console.error(`Error enriching book ${book.title}:`, error);
         skipped++;
+        results.push({ title: book.title, status: 'error' });
       }
 
-      // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Delay between books to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
 
     return NextResponse.json({
       success: true,
       enriched,
       skipped,
+      total: books.filter(Boolean).length,
       message: `Enriched ${enriched} books, skipped ${skipped}`,
+      results: results.slice(0, 20), // Return first 20 results for debugging
     });
   } catch (error) {
     console.error('Error enriching books:', error);

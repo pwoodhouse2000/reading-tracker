@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       ...result,
-      message: `Successfully synced ${result.synced} books. ${result.skipped} already synced.`,
+      message: `Successfully synced ${result.synced} books (${result.enriched} with covers/summaries). ${result.skipped} already synced.`,
     });
   } catch (error) {
     console.error('Error in Todoist sync:', error);

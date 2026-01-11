@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, X, RefreshCw, Star } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Search, X, RefreshCw, Star, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 
 interface BookInfo {
@@ -16,7 +16,20 @@ interface BookInfo {
 }
 
 interface BookFormProps {
-  book?: any;
+  book?: {
+    id: string;
+    title: string;
+    author: string;
+    mediaType: string;
+    status: string;
+    category: string;
+    subCategory: string | null;
+    summary: string | null;
+    thoughts: string | null;
+    coverImageUrl: string | null;
+    isbn: string | null;
+    rating: number | null;
+  };
   mode: 'create' | 'edit';
 }
 
@@ -56,7 +69,7 @@ export function BookForm({ book, mode }: BookFormProps) {
           `/api/books/search?q=${encodeURIComponent(searchQuery)}`
         );
         const data = await response.json();
-        setSearchResults(data || []);
+        setSearchResults(data.results || []);
         setShowResults(true);
       } catch (error) {
         console.error('Error searching books:', error);
@@ -64,7 +77,7 @@ export function BookForm({ book, mode }: BookFormProps) {
       } finally {
         setSearching(false);
       }
-    }, 500); // 500ms debounce
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
@@ -74,7 +87,7 @@ export function BookForm({ book, mode }: BookFormProps) {
     setLoading(true);
 
     try {
-      const url = mode === 'create' ? '/api/books' : `/api/books/${book.id}`;
+      const url = mode === 'create' ? '/api/books' : `/api/books/${book?.id}`;
       const method = mode === 'create' ? 'POST' : 'PATCH';
 
       const response = await fetch(url, {
@@ -134,8 +147,8 @@ export function BookForm({ book, mode }: BookFormProps) {
       );
       const data = await response.json();
 
-      if (data && data.length > 0) {
-        setSearchResults(data);
+      if (data.results && data.results.length > 0) {
+        setSearchResults(data.results);
         setShowResults(true);
       } else {
         alert('No matching books found. Try editing the title or author.');
@@ -159,36 +172,44 @@ export function BookForm({ book, mode }: BookFormProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
+    <Card className="border-0 shadow-xl bg-white/90 backdrop-blur">
+      <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-primary/5 to-accent/5">
+        <CardTitle className="text-2xl">
           {mode === 'create' ? 'Add New Book' : 'Edit Book'}
         </CardTitle>
+        <CardDescription>
+          {mode === 'create' 
+            ? 'Search for a book or enter details manually'
+            : 'Update book information and your notes'}
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Search Section - for both create and edit */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <label className="block text-sm font-medium mb-2">
-              {mode === 'create' ? 'Search for a book (optional)' : 'Refresh cover image & summary'}
-            </label>
+      <CardContent className="pt-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Search Section */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-5 w-5 text-blue-600" />
+              <label className="text-sm font-semibold text-blue-900">
+                {mode === 'create' ? 'Search for a book' : 'Find different edition or cover'}
+              </label>
+            </div>
             <div className="relative">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={mode === 'create' ? "Search by title, author, or ISBN..." : "Search again or use refresh button..."}
-                  className="w-full pl-10 pr-10 py-2 border rounded-md"
+                  placeholder="Search by title, author, or ISBN..."
+                  className="w-full pl-12 pr-12 py-3 border-2 border-transparent bg-white rounded-xl shadow-sm focus:border-blue-300 focus:ring-0 transition-all"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={clearSearch}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-5 w-5" />
                   </button>
                 )}
               </div>
@@ -199,50 +220,55 @@ export function BookForm({ book, mode }: BookFormProps) {
                   onClick={handleRefreshMetadata}
                   disabled={searching}
                   variant="outline"
-                  className="mt-2 w-full"
+                  className="mt-3 w-full rounded-xl border-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50"
                   size="sm"
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${searching ? 'animate-spin' : ''}`} />
-                  {searching ? 'Searching...' : 'Search for Covers & Summary'}
+                  {searching ? 'Searching...' : 'Search for Cover & Summary'}
                 </Button>
               )}
 
-              {/* Search Results */}
+              {/* Search Results Dropdown */}
               {showResults && (
-                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-96 overflow-y-auto">
+                <div className="absolute z-20 w-full mt-2 bg-white border-2 border-gray-100 rounded-xl shadow-2xl max-h-96 overflow-y-auto">
                   {searching ? (
-                    <div className="p-4 text-center text-muted-foreground">
+                    <div className="p-6 text-center text-muted-foreground">
+                      <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
                       Searching...
                     </div>
                   ) : searchResults.length === 0 ? (
-                    <div className="p-4 text-center text-muted-foreground">
+                    <div className="p-6 text-center text-muted-foreground">
                       No books found. Try a different search term.
                     </div>
                   ) : (
-                    <div className="divide-y">
+                    <div className="divide-y divide-gray-100">
                       {searchResults.map((result, index) => (
                         <button
                           key={index}
                           type="button"
                           onClick={() => handleSelectBook(result)}
-                          className="w-full p-3 text-left hover:bg-accent transition-colors flex gap-3"
+                          className="w-full p-4 text-left hover:bg-gray-50 transition-colors flex gap-4"
                         >
-                          {result.coverImageUrl && (
+                          {result.coverImageUrl ? (
                             <img
                               src={result.coverImageUrl}
                               alt={result.title}
-                              className="w-12 h-16 object-cover rounded"
+                              className="w-14 h-20 object-cover rounded-lg shadow-md flex-shrink-0"
                             />
+                          ) : (
+                            <div className="w-14 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <span className="text-gray-500 text-xs">No cover</span>
+                            </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm line-clamp-1">
+                            <div className="font-semibold text-sm line-clamp-2">
                               {result.title}
                             </div>
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-sm text-muted-foreground mt-0.5">
                               by {result.author}
                             </div>
                             {result.summary && (
-                              <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              <div className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
                                 {result.summary}
                               </div>
                             )}
@@ -254,74 +280,91 @@ export function BookForm({ book, mode }: BookFormProps) {
                 </div>
               )}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-blue-700/70 mt-3">
               {mode === 'create'
                 ? 'Search to auto-fill book details, or enter manually below'
                 : 'Find and select a different edition or cover image'}
             </p>
           </div>
 
-          {/* Current Cover Preview */}
+          {/* Cover Preview */}
           {formData.coverImageUrl && (
-            <div>
-              <label className="block text-sm font-medium mb-2">Current Cover</label>
-              <div className="relative w-32 h-48">
+            <div className="flex gap-6 items-start">
+              <div className="relative w-32 h-48 flex-shrink-0">
                 <Image
                   src={formData.coverImageUrl}
                   alt={formData.title}
                   fill
-                  className="object-cover rounded-md border"
+                  className="object-cover rounded-xl shadow-lg"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-2 text-muted-foreground">
+                  Cover Image URL
+                </label>
+                <input
+                  type="url"
+                  name="coverImageUrl"
+                  value={formData.coverImageUrl}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all text-sm"
+                  placeholder="https://..."
                 />
               </div>
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Title *
-            </label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border rounded-md"
-            />
+          {/* Title and Author */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                Title <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all"
+                placeholder="Enter book title"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                Author <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="author"
+                value={formData.author}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all"
+                placeholder="Enter author name"
+              />
+            </div>
           </div>
 
+          {/* Rating */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Author *
+            <label className="block text-sm font-semibold mb-3">
+              Rating
             </label>
-            <input
-              type="text"
-              name="author"
-              value={formData.author}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border rounded-md"
-            />
-          </div>
-
-          {/* Rating Selector */}
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Rating (optional)
-            </label>
-            <div className="flex gap-1">
+            <div className="flex items-center gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   type="button"
                   onClick={() => setRating(formData.rating === star ? null : star)}
-                  className="transition-all hover:scale-110"
+                  className="transition-all hover:scale-110 focus:scale-110"
                 >
                   <Star
                     className={`h-8 w-8 ${
                       formData.rating && star <= formData.rating
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
+                        ? 'fill-amber-400 text-amber-400'
+                        : 'text-gray-300 hover:text-amber-300'
                     }`}
                   />
                 </button>
@@ -330,7 +373,7 @@ export function BookForm({ book, mode }: BookFormProps) {
                 <button
                   type="button"
                   onClick={() => setRating(null)}
-                  className="ml-2 text-sm text-muted-foreground hover:text-foreground"
+                  className="ml-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Clear
                 </button>
@@ -338,50 +381,51 @@ export function BookForm({ book, mode }: BookFormProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Type, Status, Category */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-semibold mb-2">
                 Media Type
               </label>
               <select
                 name="mediaType"
                 value={formData.mediaType}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all bg-white"
               >
-                <option value="PAPER">Paper</option>
-                <option value="AUDIOBOOK">Audiobook</option>
-                <option value="EBOOK">E-book</option>
+                <option value="PAPER">📖 Paper</option>
+                <option value="AUDIOBOOK">🎧 Audiobook</option>
+                <option value="EBOOK">📱 E-book</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-semibold mb-2">
                 Status
               </label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all bg-white"
               >
-                <option value="TO_READ">To Read</option>
-                <option value="NEXT_UP">Next Up</option>
-                <option value="READING">Reading</option>
-                <option value="PAUSED">Paused</option>
-                <option value="FINISHED">Finished</option>
+                <option value="TO_READ">📋 To Read</option>
+                <option value="NEXT_UP">⏳ Next Up</option>
+                <option value="READING">📖 Reading</option>
+                <option value="PAUSED">⏸️ Paused</option>
+                <option value="FINISHED">✅ Finished</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-semibold mb-2">
                 Category
               </label>
               <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-md"
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all bg-white"
               >
                 <option value="FICTION">Fiction</option>
                 <option value="NON_FICTION">Non-Fiction</option>
@@ -390,55 +434,57 @@ export function BookForm({ book, mode }: BookFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Sub-category (optional)
+            <label className="block text-sm font-semibold mb-2">
+              Sub-category
             </label>
             <input
               type="text"
               name="subCategory"
               value={formData.subCategory}
               onChange={handleChange}
-              placeholder="e.g., Science Fiction, Biography, etc."
-              className="w-full px-3 py-2 border rounded-md"
+              placeholder="e.g., Science Fiction, Biography, Self-Help..."
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Summary (optional)
+            <label className="block text-sm font-semibold mb-2">
+              Summary
             </label>
             <textarea
               name="summary"
               value={formData.summary}
               onChange={handleChange}
-              rows={3}
-              placeholder="Book description or synopsis"
-              className="w-full px-3 py-2 border rounded-md"
+              rows={4}
+              placeholder="Book description or synopsis..."
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all resize-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
-              My Thoughts (optional)
+            <label className="block text-sm font-semibold mb-2">
+              My Thoughts
             </label>
             <textarea
               name="thoughts"
               value={formData.thoughts}
               onChange={handleChange}
-              rows={3}
+              rows={4}
               placeholder="Your personal thoughts about this book..."
-              className="w-full px-3 py-2 border rounded-md"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all resize-none"
             />
           </div>
 
-          <div className="flex gap-2">
-            <Button type="submit" disabled={loading}>
+          {/* Actions */}
+          <div className="flex gap-3 pt-4 border-t border-gray-100">
+            <Button type="submit" disabled={loading} className="shadow-lg shadow-primary/25">
               {loading ? 'Saving...' : mode === 'create' ? 'Add Book' : 'Save Changes'}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => router.back()}
+              className="border-2"
             >
               Cancel
             </Button>
