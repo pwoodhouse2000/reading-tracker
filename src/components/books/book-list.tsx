@@ -10,7 +10,7 @@ interface Book {
   title: string;
   author: string;
   status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED';
-  mediaType: 'PAPER' | 'AUDIOBOOK' | 'EBOOK';
+  mediaTypes: string; // Comma-separated string
   category: 'FICTION' | 'NON_FICTION';
   subCategory?: string | null;
   rating: number | null;

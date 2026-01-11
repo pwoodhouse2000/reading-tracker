@@ -8,13 +8,14 @@ import { StatusBadge } from './status-badge';
 import { RatingStars } from './rating-stars';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Headphones, Tablet } from 'lucide-react';
+import { parseMediaTypes } from '@/lib/constants';
 
 interface Book {
   id: string;
   title: string;
   author: string;
   status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED';
-  mediaType: 'PAPER' | 'AUDIOBOOK' | 'EBOOK';
+  mediaTypes: string; // Comma-separated string
   category: 'FICTION' | 'NON_FICTION';
   subCategory?: string | null;
   rating: number | null;
@@ -27,10 +28,16 @@ interface BookCardProps {
   compact?: boolean;
 }
 
-const mediaTypeIcons = {
+const mediaTypeIcons: Record<string, any> = {
   PAPER: BookOpen,
   AUDIOBOOK: Headphones,
   EBOOK: Tablet,
+};
+
+const mediaTypeLabels: Record<string, string> = {
+  PAPER: 'Paper',
+  AUDIOBOOK: 'Audio',
+  EBOOK: 'E-book',
 };
 
 // Generate a consistent gradient based on title
@@ -51,7 +58,7 @@ function getTitleGradient(title: string): string {
 
 export function BookCard({ book, compact = false }: BookCardProps) {
   const router = useRouter();
-  const MediaIcon = mediaTypeIcons[book.mediaType];
+  const mediaTypesArray = parseMediaTypes(book.mediaTypes);
 
   // Handle badge clicks - navigate to filtered view
   const handleBadgeClick = (e: React.MouseEvent, filter: string) => {
@@ -99,7 +106,10 @@ export function BookCard({ book, compact = false }: BookCardProps) {
               <div className="flex items-center gap-3 flex-shrink-0">
                 {book.rating && <RatingStars rating={book.rating} readonly size="sm" />}
                 <div className="flex items-center gap-1">
-                  <MediaIcon className="h-4 w-4 text-muted-foreground" />
+                  {mediaTypesArray.map((mt) => {
+                    const Icon = mediaTypeIcons[mt];
+                    return Icon ? <Icon key={mt} className="h-4 w-4 text-muted-foreground" /> : null;
+                  })}
                 </div>
                 <StatusBadge status={book.status} />
               </div>
@@ -152,11 +162,16 @@ export function BookCard({ book, compact = false }: BookCardProps) {
                 </button>
               </div>
 
-              {/* Media Type Icon */}
-              <div className="absolute bottom-3 left-3 z-10">
-                <div className="bg-black/50 backdrop-blur-sm text-white p-1.5 rounded-lg">
-                  <MediaIcon className="h-4 w-4" />
-                </div>
+              {/* Media Type Icons */}
+              <div className="absolute bottom-3 left-3 z-10 flex gap-1">
+                {mediaTypesArray.map((mt) => {
+                  const Icon = mediaTypeIcons[mt];
+                  return Icon ? (
+                    <div key={mt} className="bg-black/50 backdrop-blur-sm text-white p-1.5 rounded-lg">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                  ) : null;
+                })}
               </div>
 
               {/* Rating Overlay (if rated) */}

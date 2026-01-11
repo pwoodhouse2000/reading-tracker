@@ -14,7 +14,7 @@ model Book {
   id                String      @id @default(cuid())
   title             String
   author            String
-  mediaType         MediaType
+  mediaTypes        String      @default("PAPER") // Comma-separated: "PAPER,AUDIOBOOK,EBOOK"
   status            ReadingStatus
   rating            Int?        // 1-5 stars, nullable until finished
   dateStarted       DateTime?
@@ -84,12 +84,6 @@ model NotionImport {
 }
 
 // Enums
-enum MediaType {
-  PAPER
-  AUDIOBOOK
-  EBOOK
-}
-
 enum ReadingStatus {
   TO_READ
   NEXT_UP

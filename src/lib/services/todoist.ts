@@ -109,7 +109,7 @@ export async function syncTodoistReadingList(
             author: bookInfo?.author || parsed.author || 'Unknown',
             status: 'TO_READ',
             category,
-            mediaType: 'PAPER', // Default, user can change later
+            mediaTypes: 'PAPER', // Default, user can change later
             summary: bookInfo?.summary,
             coverImageUrl: bookInfo?.coverImageUrl,
             isbn: bookInfo?.isbn,

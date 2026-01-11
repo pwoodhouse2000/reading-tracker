@@ -36,8 +36,12 @@ interface ReportData {
 
 export default function ReportsPage() {
   const currentYear = new Date().getFullYear();
+  const [dateRange, setDateRange] = useState<'year' | 'allTime' | 'custom'>('year');
   const [year, setYear] = useState(currentYear);
   const [category, setCategory] = useState('all');
+  const [subCategory, setSubCategory] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -45,8 +49,29 @@ export default function ReportsPage() {
     async function fetchReports() {
       setLoading(true);
       try {
-        const categoryParam = category === 'all' ? '' : `&category=${category}`;
-        const response = await fetch(`/api/reports?year=${year}${categoryParam}`);
+        const params = new URLSearchParams();
+        
+        // Add date range params based on selection
+        if (dateRange === 'allTime') {
+          params.set('allTime', 'true');
+        } else if (dateRange === 'custom') {
+          if (startDate) params.set('startDate', startDate);
+          if (endDate) params.set('endDate', endDate);
+        } else {
+          params.set('year', year.toString());
+        }
+
+        // Add category if not 'all'
+        if (category && category !== 'all') {
+          params.set('category', category);
+        }
+
+        // Add sub-category if selected
+        if (subCategory) {
+          params.set('subCategory', subCategory);
+        }
+
+        const response = await fetch(`/api/reports?${params.toString()}`);
         const reportData = await response.json();
         setData(reportData);
       } catch (error) {
@@ -57,7 +82,7 @@ export default function ReportsPage() {
     }
 
     fetchReports();
-  }, [year, category]);
+  }, [dateRange, year, category, subCategory, startDate, endDate]);
 
   if (loading) {
     return (
@@ -85,10 +110,18 @@ export default function ReportsPage() {
       </div>
 
       <ReportFilters
+        dateRange={dateRange}
         year={year}
         category={category}
+        subCategory={subCategory}
+        startDate={startDate}
+        endDate={endDate}
+        onDateRangeChange={setDateRange}
         onYearChange={setYear}
         onCategoryChange={setCategory}
+        onSubCategoryChange={setSubCategory}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
       />
 
       {/* Statistics Cards */}
@@ -102,7 +135,9 @@ export default function ReportsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{data.stats.total}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              in {year}
+              {dateRange === 'allTime' && 'all time'}
+              {dateRange === 'year' && `in ${year}`}
+              {dateRange === 'custom' && 'in date range'}
             </p>
           </CardContent>
         </Card>
@@ -225,8 +260,12 @@ export default function ReportsPage() {
       {data.bestBooks.length > 0 && (
         <div>
           <h2 className="text-2xl font-bold mb-4">
-            Best Books of {year}
-            {category !== 'all' && ` (${category === 'FICTION' ? 'Fiction' : 'Non-Fiction'})`}
+            Best Books
+            {dateRange === 'allTime' && ' of All Time'}
+            {dateRange === 'year' && ` of ${year}`}
+            {dateRange === 'custom' && ' (Custom Range)'}
+            {category !== 'all' && ` - ${category === 'FICTION' ? 'Fiction' : 'Non-Fiction'}`}
+            {subCategory && ` - ${subCategory}`}
           </h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {data.bestBooks.map((book) => (
@@ -240,7 +279,7 @@ export default function ReportsPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">
-              No books with 4+ stars found for {year}.
+              No books with 4+ stars found for the selected filters.
               Start rating your finished books to see them here!
             </p>
           </CardContent>

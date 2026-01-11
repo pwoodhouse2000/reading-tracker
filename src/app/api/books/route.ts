@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       data: {
         title: body.title,
         author: body.author,
-        mediaType: body.mediaType || 'PAPER',
+        mediaTypes: body.mediaTypes || 'PAPER',
         status: body.status || 'TO_READ',
         category: body.category || 'NON_FICTION',
         subCategory: body.subCategory,

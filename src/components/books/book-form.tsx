@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Search, X, RefreshCw, Star, Sparkles } from 'lucide-react';
 import Image from 'next/image';
+import { MEDIA_TYPES, getSubCategoriesForCategory, parseMediaTypes, serializeMediaTypes } from '@/lib/constants';
 
 interface BookInfo {
   title: string;
@@ -20,7 +21,7 @@ interface BookFormProps {
     id: string;
     title: string;
     author: string;
-    mediaType: string;
+    mediaTypes: string; // Comma-separated string
     status: string;
     category: string;
     subCategory: string | null;
@@ -43,13 +44,21 @@ export function BookForm({ book, mode }: BookFormProps) {
   const [searchResults, setSearchResults] = useState<BookInfo[]>([]);
   const [searching, setSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [mediaTypes, setMediaTypes] = useState<string[]>(
+    book?.mediaTypes ? parseMediaTypes(book.mediaTypes) : ['PAPER']
+  );
+  
+  // Check if subCategory is a predefined one or custom
+  const availableSubCats = book ? getSubCategoriesForCategory(book.category as 'FICTION' | 'NON_FICTION') : [];
+  const isCustomSubCat = book?.subCategory && !availableSubCats.some(sc => sc.value === book.subCategory);
+  
+  const [customSubCategory, setCustomSubCategory] = useState(isCustomSubCat ? book?.subCategory || '' : '');
   const [formData, setFormData] = useState({
     title: book?.title || '',
     author: book?.author || '',
-    mediaType: book?.mediaType || 'PAPER',
     status: book?.status || 'TO_READ',
     category: book?.category || 'NON_FICTION',
-    subCategory: book?.subCategory || '',
+    subCategory: isCustomSubCat ? 'Other' : (book?.subCategory || ''),
     summary: book?.summary || '',
     thoughts: book?.thoughts || '',
     coverImageUrl: book?.coverImageUrl || '',
@@ -96,10 +105,19 @@ export function BookForm({ book, mode }: BookFormProps) {
       const url = mode === 'create' ? '/api/books' : `/api/books/${book?.id}`;
       const method = mode === 'create' ? 'POST' : 'PATCH';
 
+      // Use custom sub-category if "Other" is selected and custom value is provided
+      const finalSubCategory = formData.subCategory === 'Other' && customSubCategory 
+        ? customSubCategory 
+        : formData.subCategory;
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          mediaTypes: serializeMediaTypes(mediaTypes),
+          subCategory: finalSubCategory,
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to save book');
@@ -395,23 +413,39 @@ export function BookForm({ book, mode }: BookFormProps) {
             </div>
           </div>
 
-          {/* Type, Status, Category, Priority */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
-                Media Type
-              </label>
-              <select
-                name="mediaType"
-                value={formData.mediaType}
-                onChange={handleChange}
-                className={selectClass}
-              >
-                <option value="PAPER">📖 Paper</option>
-                <option value="AUDIOBOOK">🎧 Audiobook</option>
-                <option value="EBOOK">📱 E-book</option>
-              </select>
+          {/* Media Types (Multiple Selection) */}
+          <div>
+            <label className="block text-sm font-semibold mb-3 text-gray-700">
+              Media Type(s) <span className="text-xs font-normal text-gray-500">(select all that apply)</span>
+            </label>
+            <div className="flex flex-wrap gap-4">
+              {MEDIA_TYPES.map((mediaType) => (
+                <label
+                  key={mediaType.value}
+                  className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={mediaTypes.includes(mediaType.value)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setMediaTypes([...mediaTypes, mediaType.value]);
+                      } else {
+                        setMediaTypes(mediaTypes.filter(mt => mt !== mediaType.value));
+                      }
+                    }}
+                    className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+                  />
+                  <span className="text-sm">
+                    {mediaType.emoji} {mediaType.label}
+                  </span>
+                </label>
+              ))}
             </div>
+          </div>
+
+          {/* Status, Category, Priority */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
             <div>
               <label className="block text-sm font-semibold mb-2 text-gray-700">
@@ -462,18 +496,40 @@ export function BookForm({ book, mode }: BookFormProps) {
             </div>
           </div>
 
+          {/* Sub-category with emoji picker */}
           <div>
             <label className="block text-sm font-semibold mb-2 text-gray-700">
               Sub-category
             </label>
-            <input
-              type="text"
+            <select
               name="subCategory"
-              value={formData.subCategory}
-              onChange={handleChange}
-              placeholder="e.g., Science Fiction, Biography, Self-Help..."
-              className={inputClass}
-            />
+              value={formData.subCategory || ''}
+              onChange={(e) => {
+                handleChange(e);
+                if (e.target.value !== 'Other') {
+                  setCustomSubCategory('');
+                }
+              }}
+              className={selectClass}
+            >
+              <option value="">Select a sub-category...</option>
+              {getSubCategoriesForCategory(formData.category as 'FICTION' | 'NON_FICTION').map((subCat) => (
+                <option key={subCat.value} value={subCat.value}>
+                  {subCat.emoji} {subCat.value}
+                </option>
+              ))}
+            </select>
+            
+            {/* Custom sub-category input when "Other" is selected */}
+            {formData.subCategory === 'Other' && (
+              <input
+                type="text"
+                value={customSubCategory}
+                onChange={(e) => setCustomSubCategory(e.target.value)}
+                placeholder="Enter custom sub-category..."
+                className={inputClass + ' mt-2'}
+              />
+            )}
           </div>
 
           {/* Date Started and Date Finished */}

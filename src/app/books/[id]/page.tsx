@@ -8,12 +8,13 @@ import { StatusBadge } from '@/components/books/status-badge';
 import { RatingStars } from '@/components/books/rating-stars';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, BookOpen, Headphones, Tablet, Calendar, Clock, Sparkles } from 'lucide-react';
+import { parseMediaTypes } from '@/lib/constants';
 
 interface BookDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-const mediaTypeConfig = {
+const mediaTypeConfig: Record<string, { label: string; icon: any }> = {
   PAPER: { label: 'Paper', icon: BookOpen },
   AUDIOBOOK: { label: 'Audiobook', icon: Headphones },
   EBOOK: { label: 'E-book', icon: Tablet },
@@ -45,7 +46,7 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
     notFound();
   }
 
-  const MediaIcon = mediaTypeConfig[book.mediaType].icon;
+  const mediaTypesArray = parseMediaTypes(book.mediaTypes);
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -95,13 +96,22 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
           {/* Quick Info Card */}
           <Card className="border-0 shadow-lg">
             <CardContent className="p-5 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <MediaIcon className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Format</p>
-                  <p className="font-medium">{mediaTypeConfig[book.mediaType].label}</p>
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Format{mediaTypesArray.length > 1 ? 's' : ''}</p>
+                <div className="space-y-2">
+                  {mediaTypesArray.map((mt) => {
+                    const config = mediaTypeConfig[mt];
+                    if (!config) return null;
+                    const Icon = config.icon;
+                    return (
+                      <div key={mt} className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Icon className="h-5 w-5 text-primary" />
+                        </div>
+                        <p className="font-medium">{config.label}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 

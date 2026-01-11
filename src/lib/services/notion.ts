@@ -1,6 +1,6 @@
 import { Client } from '@notionhq/client';
 import { prisma } from '@/lib/prisma';
-import { MediaType, ReadingStatus, Category } from '@prisma/client';
+import { ReadingStatus, Category } from '@prisma/client';
 
 interface NotionPropertyValue {
   id: string;
@@ -79,7 +79,7 @@ export async function importFromNotion(
       const rating = extractNumber(props.Rating);
       const status = mapNotionStatus(extractSelect(props.Status));
       const media = extractMultiSelect(props.Media);
-      const mediaType = mapNotionMediaType(media);
+      const mediaTypes = mapNotionMediaType(media);
       const category = mapNotionCategory(extractSelect(props.Category));
       const subCategoryArray = extractMultiSelect(props['Sub-Category']);
       const subCategory = subCategoryArray && subCategoryArray.length > 0 ? subCategoryArray.join(', ') : null;
@@ -92,7 +92,7 @@ export async function importFromNotion(
         status,
         category,
         subCategory,
-        mediaType,
+        mediaTypes,
         rating,
         dateFinished,
         priority,
@@ -199,18 +199,28 @@ function mapNotionStatus(status: string | null): ReadingStatus {
   return map[status] || 'TO_READ';
 }
 
-function mapNotionMediaType(media: string[] | null): MediaType {
+function mapNotionMediaType(media: string[] | null): string {
   if (!media || media.length === 0) return 'PAPER';
 
-  // Check for Audible or Kindle in the array
+  const mediaTypes: string[] = [];
+  
+  // Check for different media types in the array
   if (media.some(m => m.toLowerCase().includes('audible'))) {
-    return 'AUDIOBOOK';
+    mediaTypes.push('AUDIOBOOK');
   }
   if (media.some(m => m.toLowerCase().includes('kindle'))) {
-    return 'EBOOK';
+    mediaTypes.push('EBOOK');
+  }
+  if (media.some(m => m.toLowerCase().includes('paper') || m.toLowerCase().includes('book'))) {
+    mediaTypes.push('PAPER');
   }
 
-  return 'PAPER';
+  // If no specific media type was found, default to PAPER
+  if (mediaTypes.length === 0) {
+    mediaTypes.push('PAPER');
+  }
+
+  return mediaTypes.join(',');
 }
 
 function mapNotionCategory(category: string | null): Category {
