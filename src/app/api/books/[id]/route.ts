@@ -48,6 +48,22 @@ export async function PATCH(
       body.dateFinished = new Date();
     }
 
+    // Convert date strings to Date objects if provided
+    if (body.dateStarted && typeof body.dateStarted === 'string') {
+      body.dateStarted = new Date(body.dateStarted);
+    }
+    if (body.dateFinished && typeof body.dateFinished === 'string') {
+      body.dateFinished = new Date(body.dateFinished);
+    }
+
+    // Convert empty strings to null for dates
+    if (body.dateStarted === '') {
+      body.dateStarted = null;
+    }
+    if (body.dateFinished === '') {
+      body.dateFinished = null;
+    }
+
     const book = await prisma.book.update({
       where: { id },
       data: body,

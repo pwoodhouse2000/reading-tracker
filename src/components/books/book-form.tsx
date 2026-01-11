@@ -30,6 +30,8 @@ interface BookFormProps {
     isbn: string | null;
     rating: number | null;
     priority: number | null;
+    dateStarted: Date | null;
+    dateFinished: Date | null;
   };
   mode: 'create' | 'edit';
 }
@@ -54,6 +56,8 @@ export function BookForm({ book, mode }: BookFormProps) {
     isbn: book?.isbn || '',
     rating: book?.rating || null,
     priority: book?.priority || null,
+    dateStarted: book?.dateStarted ? new Date(book.dateStarted).toISOString().split('T')[0] : '',
+    dateFinished: book?.dateFinished ? new Date(book.dateFinished).toISOString().split('T')[0] : '',
   });
 
   // Debounced search effect
@@ -470,6 +474,41 @@ export function BookForm({ book, mode }: BookFormProps) {
               placeholder="e.g., Science Fiction, Biography, Self-Help..."
               className={inputClass}
             />
+          </div>
+
+          {/* Date Started and Date Finished */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
+                Date Started
+              </label>
+              <input
+                type="date"
+                name="dateStarted"
+                value={formData.dateStarted}
+                onChange={handleChange}
+                className={inputClass}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Auto-set when status changes to &quot;Reading&quot;
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
+                Date Finished
+              </label>
+              <input
+                type="date"
+                name="dateFinished"
+                value={formData.dateFinished}
+                onChange={handleChange}
+                className={inputClass}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Auto-set when status changes to &quot;Finished&quot;
+              </p>
+            </div>
           </div>
 
           <div>

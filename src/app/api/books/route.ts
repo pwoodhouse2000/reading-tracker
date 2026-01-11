@@ -31,6 +31,21 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    // Convert date strings to Date objects if provided
+    let dateStarted = body.dateStarted;
+    let dateFinished = body.dateFinished;
+
+    if (dateStarted && typeof dateStarted === 'string') {
+      dateStarted = new Date(dateStarted);
+    }
+    if (dateFinished && typeof dateFinished === 'string') {
+      dateFinished = new Date(dateFinished);
+    }
+
+    // Convert empty strings to null
+    if (dateStarted === '') dateStarted = null;
+    if (dateFinished === '') dateFinished = null;
+
     const book = await prisma.book.create({
       data: {
         title: body.title,
@@ -45,8 +60,8 @@ export async function POST(request: NextRequest) {
         apiSource: body.apiSource,
         thoughts: body.thoughts,
         rating: body.rating,
-        dateStarted: body.dateStarted,
-        dateFinished: body.dateFinished,
+        dateStarted,
+        dateFinished,
         priority: body.priority,
       },
     });
