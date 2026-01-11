@@ -58,6 +58,17 @@ A professional web application to track your reading journey, built with Next.js
 - Secure token management via environment variables
 - Track sync history and status
 
+### ✅ Phase 5: Notion Import
+
+**One-Time Notion Import**
+- Import reading list from Notion database
+- Smart field mapping (Name, Author, Status, Media, Category, etc.)
+- Automatic duplicate detection and skipping
+- Support for multiple Status values (To Read, Reading, Next Up, Finished, Paused, Wish List)
+- Media type detection (Audible → Audiobook, Kindle → Ebook, blank → Paper)
+- Priority mapping and sub-category support
+- Secure token management via environment variables
+
 ## Getting Started
 
 ### Prerequisites
@@ -169,6 +180,20 @@ TODOIST_PROJECT_ID=""
 5. Navigate to Settings → Todoist in the app
 6. Select your "Stuff to Read" project and sync
 
+### Setting up Notion Import
+
+1. Go to [Notion Integrations](https://www.notion.so/my-integrations)
+2. Click "New integration" and give it a name (e.g., "Reading Tracker")
+3. Copy the "Internal Integration Token"
+4. Share your reading list database with the integration:
+   - Open your reading list database in Notion
+   - Click "..." → "Add connections"
+   - Select your integration
+5. Add the token to your `.env` file as `NOTION_API_TOKEN="your-token-here"`
+6. Restart the development server
+7. Navigate to Settings → Notion in the app
+8. Select your reading list database and import
+
 ## Security
 
 ### API Token Management
@@ -195,11 +220,6 @@ This application follows security best practices for managing sensitive credenti
 **Important:** Never paste API tokens into web forms or client-side code. This application is designed to only accept tokens through environment variables or secure secret management systems.
 
 ## Next Steps (Upcoming Phases)
-
-### Phase 5: Notion Import
-- One-time import from existing Notion database
-- Map Notion fields to app structure
-- Secure token management via environment variables
 
 ### Phase 6: Deployment
 - Deploy to Google Cloud Run
