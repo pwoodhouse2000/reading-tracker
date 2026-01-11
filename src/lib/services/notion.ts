@@ -45,7 +45,7 @@ export async function importFromNotion(
     let startCursor: string | undefined = undefined;
 
     while (hasMore) {
-      const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+      const response: Response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiToken}`,
@@ -59,11 +59,11 @@ export async function importFromNotion(
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData: { message?: string } = await response.json();
         throw new Error(errorData.message || 'Failed to query database');
       }
 
-      const data = await response.json();
+      const data: { results: unknown[]; has_more: boolean; next_cursor?: string } = await response.json();
       allResults = allResults.concat(data.results);
       hasMore = data.has_more;
       startCursor = data.next_cursor;

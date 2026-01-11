@@ -141,7 +141,7 @@ export function BookList({ books }: BookListProps) {
 
   const totalFiltered = sortedAndGroupedBooks.grouped
     ? Object.values(sortedAndGroupedBooks.booksByStatus || {}).flat().length
-    : sortedAndGroupedBooks.books.length;
+    : (sortedAndGroupedBooks.books || []).length;
 
   return (
     <div className="space-y-6">
@@ -277,13 +277,13 @@ export function BookList({ books }: BookListProps) {
               : 'Try selecting a different filter or add some books to get started.'}
           </p>
         </div>
-      ) : sortedAndGroupedBooks.grouped ? (
+      ) : sortedAndGroupedBooks.grouped && sortedAndGroupedBooks.booksByStatus ? (
         // Grouped by status
         <div className="space-y-10">
           {Object.entries(statusOrder)
-            .filter(([status]) => sortedAndGroupedBooks.booksByStatus?.[status]?.length > 0)
+            .filter(([status]) => (sortedAndGroupedBooks.booksByStatus?.[status]?.length ?? 0) > 0)
             .map(([status]) => {
-              const statusBooks = sortedAndGroupedBooks.booksByStatus![status];
+              const statusBooks = sortedAndGroupedBooks.booksByStatus?.[status] || [];
               const statusInfo = statusFilters.find(f => f.value === status);
 
               return (
@@ -315,7 +315,7 @@ export function BookList({ books }: BookListProps) {
             ? 'grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
             : 'space-y-3'
         }>
-          {sortedAndGroupedBooks.books.map((book: Book) => (
+          {(sortedAndGroupedBooks.books || []).map((book: Book) => (
             <BookCard key={book.id} book={book} compact={viewMode === 'compact'} />
           ))}
         </div>
