@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { StatusBadge } from './status-badge';
 import { RatingStars } from './rating-stars';
@@ -13,6 +16,7 @@ interface Book {
   status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED';
   mediaType: 'PAPER' | 'AUDIOBOOK' | 'EBOOK';
   category: 'FICTION' | 'NON_FICTION';
+  subCategory?: string | null;
   rating: number | null;
   coverImageUrl: string | null;
   summary: string | null;
@@ -27,12 +31,6 @@ const mediaTypeIcons = {
   PAPER: BookOpen,
   AUDIOBOOK: Headphones,
   EBOOK: Tablet,
-};
-
-const mediaTypeLabels = {
-  PAPER: 'Paper',
-  AUDIOBOOK: 'Audiobook',
-  EBOOK: 'E-book',
 };
 
 // Generate a consistent gradient based on title
@@ -52,7 +50,15 @@ function getTitleGradient(title: string): string {
 }
 
 export function BookCard({ book, compact = false }: BookCardProps) {
+  const router = useRouter();
   const MediaIcon = mediaTypeIcons[book.mediaType];
+
+  // Handle badge clicks - navigate to filtered view
+  const handleBadgeClick = (e: React.MouseEvent, filter: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/books?${filter}`);
+  };
 
   if (compact) {
     return (
@@ -136,9 +142,14 @@ export function BookCard({ book, compact = false }: BookCardProps) {
                 </div>
               )}
               
-              {/* Status Badge Overlay */}
+              {/* Status Badge Overlay - Clickable */}
               <div className="absolute top-3 right-3 z-10">
-                <StatusBadge status={book.status} />
+                <button 
+                  onClick={(e) => handleBadgeClick(e, `status=${book.status}`)}
+                  className="hover:scale-105 transition-transform"
+                >
+                  <StatusBadge status={book.status} />
+                </button>
               </div>
 
               {/* Media Type Icon */}
@@ -147,6 +158,16 @@ export function BookCard({ book, compact = false }: BookCardProps) {
                   <MediaIcon className="h-4 w-4" />
                 </div>
               </div>
+
+              {/* Rating Overlay (if rated) */}
+              {book.rating && (
+                <div className="absolute bottom-3 right-3 z-10">
+                  <div className="bg-black/50 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1">
+                    <span className="text-yellow-400 text-sm">★</span>
+                    <span className="text-white text-sm font-medium">{book.rating}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Book Info */}
@@ -158,25 +179,39 @@ export function BookCard({ book, compact = false }: BookCardProps) {
                 {book.author}
               </p>
 
-              {/* Rating */}
-              {book.rating && (
-                <div className="pt-1">
-                  <RatingStars rating={book.rating} readonly size="sm" />
-                </div>
-              )}
-
-              {/* Category Badge */}
-              <div className="pt-1">
-                <Badge 
-                  variant="outline" 
-                  className={`text-xs ${
-                    book.category === 'FICTION' 
-                      ? 'border-violet-300 text-violet-700 bg-violet-50' 
-                      : 'border-emerald-300 text-emerald-700 bg-emerald-50'
-                  }`}
+              {/* Clickable Badges */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {/* Category Badge - Clickable */}
+                <button
+                  onClick={(e) => handleBadgeClick(e, `category=${book.category}`)}
+                  className="hover:scale-105 transition-transform"
                 >
-                  {book.category === 'FICTION' ? 'Fiction' : 'Non-Fiction'}
-                </Badge>
+                  <Badge 
+                    variant="outline" 
+                    className={`text-xs cursor-pointer ${
+                      book.category === 'FICTION' 
+                        ? 'border-violet-300 text-violet-700 bg-violet-50 hover:bg-violet-100' 
+                        : 'border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                    }`}
+                  >
+                    {book.category === 'FICTION' ? 'Fiction' : 'Non-Fiction'}
+                  </Badge>
+                </button>
+
+                {/* Sub-category Badge - Clickable */}
+                {book.subCategory && (
+                  <button
+                    onClick={(e) => handleBadgeClick(e, `subCategory=${encodeURIComponent(book.subCategory!)}`)}
+                    className="hover:scale-105 transition-transform"
+                  >
+                    <Badge 
+                      variant="outline" 
+                      className="text-xs cursor-pointer border-gray-300 text-gray-600 bg-gray-50 hover:bg-gray-100"
+                    >
+                      {book.subCategory}
+                    </Badge>
+                  </button>
+                )}
               </div>
 
               {/* Summary */}

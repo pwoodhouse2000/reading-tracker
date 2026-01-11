@@ -12,6 +12,7 @@ interface Book {
   status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED';
   mediaType: 'PAPER' | 'AUDIOBOOK' | 'EBOOK';
   category: 'FICTION' | 'NON_FICTION';
+  subCategory?: string | null;
   rating: number | null;
   coverImageUrl: string | null;
   summary: string | null;
@@ -21,6 +22,10 @@ interface Book {
 
 interface BookListProps {
   books: Book[];
+  initialStatus?: string;
+  initialCategory?: string;
+  initialSubCategory?: string;
+  initialSearch?: string;
 }
 
 const statusFilters = [
@@ -40,12 +45,23 @@ const statusOrder = {
   'FINISHED': 5,
 };
 
-export function BookList({ books }: BookListProps) {
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [groupByStatus, setGroupByStatus] = useState(true);
+export function BookList({ 
+  books, 
+  initialStatus,
+  initialCategory,
+  initialSubCategory,
+  initialSearch 
+}: BookListProps) {
+  // When URL has filters, don't group by status (show flat list)
+  const hasUrlFilters = !!(initialStatus || initialCategory || initialSubCategory);
+  
+  const [statusFilter, setStatusFilter] = useState<string | null>(initialStatus || null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(initialCategory || null);
+  const [subCategoryFilter, setSubCategoryFilter] = useState<string | null>(initialSubCategory || null);
+  const [groupByStatus, setGroupByStatus] = useState(!hasUrlFilters);
   const [sortBy, setSortBy] = useState<'title' | 'author' | 'rating' | 'recent' | 'priority'>('priority');
   const [enriching, setEnriching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearch || '');
   const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
 
   const handleEnrich = async () => {
@@ -81,13 +97,24 @@ export function BookList({ books }: BookListProps) {
       return (
         book.title.toLowerCase().includes(query) ||
         book.author.toLowerCase().includes(query) ||
-        book.summary?.toLowerCase().includes(query)
+        book.summary?.toLowerCase().includes(query) ||
+        book.subCategory?.toLowerCase().includes(query)
       );
     });
 
-    // Then filter by status
+    // Filter by status
     if (statusFilter) {
       filtered = filtered.filter((book) => book.status === statusFilter);
+    }
+
+    // Filter by category
+    if (categoryFilter) {
+      filtered = filtered.filter((book) => book.category === categoryFilter);
+    }
+
+    // Filter by sub-category
+    if (subCategoryFilter) {
+      filtered = filtered.filter((book) => book.subCategory === subCategoryFilter);
     }
 
     // Sort function
@@ -137,7 +164,7 @@ export function BookList({ books }: BookListProps) {
     });
 
     return { grouped: true, booksByStatus: grouped };
-  }, [books, statusFilter, groupByStatus, sortBy, searchQuery]);
+  }, [books, statusFilter, categoryFilter, subCategoryFilter, groupByStatus, sortBy, searchQuery]);
 
   const totalFiltered = sortedAndGroupedBooks.grouped
     ? Object.values(sortedAndGroupedBooks.booksByStatus || {}).flat().length

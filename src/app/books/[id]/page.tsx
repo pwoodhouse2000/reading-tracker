@@ -153,22 +153,30 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
 
         {/* Right Column - Details */}
         <div className="space-y-6">
-          {/* Title & Meta */}
+          {/* Title & Meta - Clickable badges */}
           <div>
-            <div className="flex items-start gap-4 mb-4">
-              <StatusBadge status={book.status} />
-              <Badge 
-                variant="outline" 
-                className={
-                  book.category === 'FICTION' 
-                    ? 'border-violet-300 text-violet-700 bg-violet-50' 
-                    : 'border-emerald-300 text-emerald-700 bg-emerald-50'
-                }
-              >
-                {book.category === 'FICTION' ? 'Fiction' : 'Non-Fiction'}
-              </Badge>
+            <div className="flex items-start gap-3 mb-4 flex-wrap">
+              <Link href={`/books?status=${book.status}`} className="hover:scale-105 transition-transform">
+                <StatusBadge status={book.status} />
+              </Link>
+              <Link href={`/books?category=${book.category}`} className="hover:scale-105 transition-transform">
+                <Badge 
+                  variant="outline" 
+                  className={`cursor-pointer ${
+                    book.category === 'FICTION' 
+                      ? 'border-violet-300 text-violet-700 bg-violet-50 hover:bg-violet-100' 
+                      : 'border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                  }`}
+                >
+                  {book.category === 'FICTION' ? 'Fiction' : 'Non-Fiction'}
+                </Badge>
+              </Link>
               {book.subCategory && (
-                <Badge variant="outline">{book.subCategory}</Badge>
+                <Link href={`/books?subCategory=${encodeURIComponent(book.subCategory)}`} className="hover:scale-105 transition-transform">
+                  <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">
+                    {book.subCategory}
+                  </Badge>
+                </Link>
               )}
             </div>
             

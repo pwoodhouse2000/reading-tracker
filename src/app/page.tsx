@@ -73,67 +73,75 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Clickable to filter books */}
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/30 transition-all hover:-translate-y-1">
-          <div className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-100">Currently Reading</p>
-                <p className="text-5xl font-bold mt-2 tracking-tight">{currentlyReading}</p>
-              </div>
-              <div className="bg-white/20 p-3 rounded-xl">
-                <BookOpen className="h-6 w-6" />
+        <Link href="/books?status=READING">
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-xl shadow-blue-500/20 hover:shadow-2xl hover:shadow-blue-500/30 transition-all hover:-translate-y-1 cursor-pointer">
+            <div className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-100">Currently Reading</p>
+                  <p className="text-5xl font-bold mt-2 tracking-tight">{currentlyReading}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-xl">
+                  <BookOpen className="h-6 w-6" />
+                </div>
               </div>
             </div>
-          </div>
-          <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
-        </Card>
+            <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
+          </Card>
+        </Link>
 
-        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-xl shadow-violet-500/20 hover:shadow-2xl hover:shadow-violet-500/30 transition-all hover:-translate-y-1">
-          <div className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-violet-100">To Read</p>
-                <p className="text-5xl font-bold mt-2 tracking-tight">{toRead}</p>
-              </div>
-              <div className="bg-white/20 p-3 rounded-xl">
-                <Clock className="h-6 w-6" />
+        <Link href="/books?status=TO_READ">
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-xl shadow-violet-500/20 hover:shadow-2xl hover:shadow-violet-500/30 transition-all hover:-translate-y-1 cursor-pointer">
+            <div className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-violet-100">To Read</p>
+                  <p className="text-5xl font-bold mt-2 tracking-tight">{toRead}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-xl">
+                  <Clock className="h-6 w-6" />
+                </div>
               </div>
             </div>
-          </div>
-          <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
-        </Card>
+            <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
+          </Card>
+        </Link>
 
-        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-xl shadow-emerald-500/20 hover:shadow-2xl hover:shadow-emerald-500/30 transition-all hover:-translate-y-1">
-          <div className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-emerald-100">Finished {new Date().getFullYear()}</p>
-                <p className="text-5xl font-bold mt-2 tracking-tight">{finishedThisYear}</p>
-              </div>
-              <div className="bg-white/20 p-3 rounded-xl">
-                <CheckCircle2 className="h-6 w-6" />
+        <Link href={`/books?status=FINISHED&year=${new Date().getFullYear()}`}>
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-xl shadow-emerald-500/20 hover:shadow-2xl hover:shadow-emerald-500/30 transition-all hover:-translate-y-1 cursor-pointer">
+            <div className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-emerald-100">Finished {new Date().getFullYear()}</p>
+                  <p className="text-5xl font-bold mt-2 tracking-tight">{finishedThisYear}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-xl">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
               </div>
             </div>
-          </div>
-          <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
-        </Card>
+            <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
+          </Card>
+        </Link>
 
-        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-xl shadow-amber-500/20 hover:shadow-2xl hover:shadow-amber-500/30 transition-all hover:-translate-y-1">
-          <div className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-amber-100">Total Collection</p>
-                <p className="text-5xl font-bold mt-2 tracking-tight">{totalBooks}</p>
-              </div>
-              <div className="bg-white/20 p-3 rounded-xl">
-                <Library className="h-6 w-6" />
+        <Link href="/books">
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-xl shadow-amber-500/20 hover:shadow-2xl hover:shadow-amber-500/30 transition-all hover:-translate-y-1 cursor-pointer">
+            <div className="p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-amber-100">Total Collection</p>
+                  <p className="text-5xl font-bold mt-2 tracking-tight">{totalBooks}</p>
+                </div>
+                <div className="bg-white/20 p-3 rounded-xl">
+                  <Library className="h-6 w-6" />
+                </div>
               </div>
             </div>
-          </div>
-          <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
-        </Card>
+            <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500" />
+          </Card>
+        </Link>
       </section>
 
       {/* Currently Reading */}
