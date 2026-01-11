@@ -160,23 +160,20 @@ export default function NotionSettingsPage() {
 
             <div>
               <label className="block text-sm font-medium mb-1">
-                Select Database
+                Database ID
               </label>
-              <select
+              <input
+                type="text"
                 value={selectedDatabaseId}
                 onChange={(e) => setSelectedDatabaseId(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
-                disabled={loadingDatabases}
-              >
-                <option value="">-- Select a database --</option>
-                {databases.map((db) => (
-                  <option key={db.id} value={db.id}>
-                    {db.name}
-                  </option>
-                ))}
-              </select>
+                className="w-full px-3 py-2 border rounded-md font-mono text-sm"
+                placeholder="Paste your database ID here"
+              />
               <p className="text-xs text-muted-foreground mt-1">
-                Choose your reading list database to import books
+                To get your database ID: Open "Pete's Reading List" in Notion, copy the URL. The database ID is the part after the last slash and before the "?" (32 characters, letters and numbers).
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Example URL: https://www.notion.so/myworkspace/<strong>abc123def456...</strong>?v=...
               </p>
             </div>
 

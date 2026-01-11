@@ -17,11 +17,9 @@ export async function getNotionDatabases(apiToken: string) {
   const notion = new Client({ auth: apiToken });
 
   try {
+    // Search without filters and manually filter for databases
     const response = await notion.search({
-      filter: {
-        property: 'object',
-        value: 'database' as any, // Type assertion needed for Notion API
-      },
+      page_size: 100,
     });
 
     return response.results
@@ -40,26 +38,51 @@ export async function importFromNotion(
   apiToken: string,
   databaseId: string
 ) {
-  const notion = new Client({ auth: apiToken });
-
   try {
-    // Fetch all pages from the database
-    const response = await (notion.databases as any).query({
-      database_id: databaseId,
-    });
+    // Fetch all pages from the database with pagination
+    let allResults: any[] = [];
+    let hasMore = true;
+    let startCursor: string | undefined = undefined;
 
-    const books = response.results.map((page: any) => {
+    while (hasMore) {
+      const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          start_cursor: startCursor,
+          page_size: 100,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to query database');
+      }
+
+      const data = await response.json();
+      allResults = allResults.concat(data.results);
+      hasMore = data.has_more;
+      startCursor = data.next_cursor;
+    }
+
+    const books = allResults.map((page: any) => {
       const props = page.properties;
 
       // Extract property values based on Notion property types
       const title = extractTitle(props.Name);
-      const author = extractRichText(props['Author(s)']) || 'Unknown';
+      const authorArray = extractMultiSelect(props['Author(s)']);
+      const author = authorArray && authorArray.length > 0 ? authorArray[0] : 'Unknown';
       const rating = extractNumber(props.Rating);
       const status = mapNotionStatus(extractSelect(props.Status));
       const media = extractMultiSelect(props.Media);
       const mediaType = mapNotionMediaType(media);
       const category = mapNotionCategory(extractSelect(props.Category));
-      const subCategory = extractMultiSelect(props['Sub-Category'])?.join(', ');
+      const subCategoryArray = extractMultiSelect(props['Sub-Category']);
+      const subCategory = subCategoryArray && subCategoryArray.length > 0 ? subCategoryArray.join(', ') : null;
       const priority = mapNotionPriority(extractSelect(props.Priority));
       const dateFinished = extractDate(props['Date Finished']);
 
