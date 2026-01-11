@@ -4,6 +4,9 @@ import { BookList } from '@/components/books/book-list';
 import { Button } from '@/components/ui/button';
 import { Plus, Download } from 'lucide-react';
 
+// Force dynamic rendering - database queries at runtime
+export const dynamic = 'force-dynamic';
+
 export default async function BooksPage() {
   const books = await prisma.book.findMany({
     orderBy: [

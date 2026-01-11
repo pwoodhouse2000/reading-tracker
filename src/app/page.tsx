@@ -5,6 +5,9 @@ import { BookCard } from '@/components/books/book-card';
 import { Card } from '@/components/ui/card';
 import { Plus, BookOpen, Clock, CheckCircle2, Library, ArrowRight, Sparkles } from 'lucide-react';
 
+// Force dynamic rendering - database queries at runtime, not build time
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const [
     currentlyReading,
