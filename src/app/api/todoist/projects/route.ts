@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTodoistProjects } from '@/lib/services/todoist';
 
-// GET /api/todoist/projects?token=xxx
+// GET /api/todoist/projects
+// Uses TODOIST_API_TOKEN from environment variables
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const token = searchParams.get('token');
+    const token = process.env.TODOIST_API_TOKEN;
 
     if (!token) {
       return NextResponse.json(
-        { error: 'Todoist API token is required' },
+        { error: 'Todoist API token not configured. Please set TODOIST_API_TOKEN in .env file.' },
         { status: 400 }
       );
     }

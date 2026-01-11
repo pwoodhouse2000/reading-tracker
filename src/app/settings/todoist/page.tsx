@@ -20,7 +20,6 @@ interface LastSync {
 }
 
 export default function TodoistSettingsPage() {
-  const [apiToken, setApiToken] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [loadingProjects, setLoadingProjects] = useState(false);
@@ -28,11 +27,33 @@ export default function TodoistSettingsPage() {
   const [syncResult, setSyncResult] = useState<any>(null);
   const [lastSync, setLastSync] = useState<LastSync | null>(null);
   const [autoComplete, setAutoComplete] = useState(true);
+  const [configured, setConfigured] = useState(false);
 
-  // Load last sync on mount
+  // Load projects and last sync on mount
   useEffect(() => {
+    fetchProjects();
     fetchLastSync();
   }, []);
+
+  const fetchProjects = async () => {
+    setLoadingProjects(true);
+    try {
+      const response = await fetch('/api/todoist/projects');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch projects');
+      }
+
+      setProjects(data.projects);
+      setConfigured(true);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      setConfigured(false);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
 
   const fetchLastSync = async () => {
     try {
@@ -46,32 +67,8 @@ export default function TodoistSettingsPage() {
     }
   };
 
-  const handleFetchProjects = async () => {
-    if (!apiToken) {
-      alert('Please enter your Todoist API token');
-      return;
-    }
-
-    setLoadingProjects(true);
-    try {
-      const response = await fetch(`/api/todoist/projects?token=${encodeURIComponent(apiToken)}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch projects');
-      }
-
-      setProjects(data.projects);
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-      alert(error instanceof Error ? error.message : 'Failed to fetch projects');
-    } finally {
-      setLoadingProjects(false);
-    }
-  };
-
   const handleSync = async () => {
-    if (!apiToken || !selectedProjectId) {
+    if (!selectedProjectId) {
       alert('Please select a project first');
       return;
     }
@@ -84,7 +81,6 @@ export default function TodoistSettingsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          apiToken,
           projectId: selectedProjectId,
           autoComplete,
         }),
@@ -115,51 +111,48 @@ export default function TodoistSettingsPage() {
         </p>
       </div>
 
-      {/* Instructions Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>How to Get Your API Token</CardTitle>
-          <CardDescription>Follow these steps to connect your Todoist account</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <ol className="list-decimal list-inside space-y-2 text-sm">
-            <li>Go to <a href="https://todoist.com/app/settings/integrations/developer" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Todoist Settings → Integrations → Developer</a></li>
-            <li>Copy your API token</li>
-            <li>Paste it in the field below</li>
-            <li>Click "Load Projects" to see your Todoist projects</li>
-            <li>Select your "Stuff to Read" project and sync</li>
-          </ol>
-        </CardContent>
-      </Card>
-
-      {/* Configuration Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Configuration</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Todoist API Token
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="password"
-                value={apiToken}
-                onChange={(e) => setApiToken(e.target.value)}
-                placeholder="Enter your Todoist API token"
-                className="flex-1 px-3 py-2 border rounded-md"
-              />
-              <Button
-                onClick={handleFetchProjects}
-                disabled={loadingProjects || !apiToken}
-              >
-                {loadingProjects ? 'Loading...' : 'Load Projects'}
+      {/* Setup Instructions Card */}
+      {!configured && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardHeader>
+            <CardTitle>Configuration Required</CardTitle>
+            <CardDescription>Set up your Todoist API token to enable sync</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm">To connect with Todoist, you need to configure your API token:</p>
+            <ol className="list-decimal list-inside space-y-2 text-sm">
+              <li>Go to <a href="https://todoist.com/app/settings/integrations/developer" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Todoist Settings → Integrations → Developer</a></li>
+              <li>Copy your API token</li>
+              <li>Add it to your <code className="bg-muted px-1 py-0.5 rounded">.env</code> file:
+                <pre className="bg-muted p-2 rounded mt-1 text-xs">TODOIST_API_TOKEN="your-token-here"</pre>
+              </li>
+              <li>Restart the development server</li>
+              <li>Refresh this page</li>
+            </ol>
+            <div className="pt-2">
+              <Button onClick={fetchProjects} variant="outline" size="sm">
+                Check Configuration
               </Button>
             </div>
-          </div>
+          </CardContent>
+        </Card>
+      )}
 
-          {projects.length > 0 && (
+      {/* Configuration Card */}
+      {configured && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sync Settings</CardTitle>
+            <CardDescription>
+              Configure your Todoist sync preferences
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Badge variant="default">Configured</Badge>
+              <span className="text-muted-foreground">Todoist API token is set</span>
+            </div>
+
             <div>
               <label className="block text-sm font-medium mb-1">
                 Select Project
@@ -168,6 +161,7 @@ export default function TodoistSettingsPage() {
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
                 className="w-full px-3 py-2 border rounded-md"
+                disabled={loadingProjects}
               >
                 <option value="">-- Select a project --</option>
                 {projects.map((project) => (
@@ -176,33 +170,36 @@ export default function TodoistSettingsPage() {
                   </option>
                 ))}
               </select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Choose your "Stuff to Read" project to sync
+              </p>
             </div>
-          )}
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="autoComplete"
-              checked={autoComplete}
-              onChange={(e) => setAutoComplete(e.target.checked)}
-              className="h-4 w-4"
-            />
-            <label htmlFor="autoComplete" className="text-sm">
-              Automatically mark Todoist tasks as complete after syncing
-            </label>
-          </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="autoComplete"
+                checked={autoComplete}
+                onChange={(e) => setAutoComplete(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <label htmlFor="autoComplete" className="text-sm">
+                Automatically mark Todoist tasks as complete after syncing
+              </label>
+            </div>
 
-          {selectedProjectId && (
-            <Button
-              onClick={handleSync}
-              disabled={syncing}
-              className="w-full"
-            >
-              {syncing ? 'Syncing...' : 'Sync Now'}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+            {selectedProjectId && (
+              <Button
+                onClick={handleSync}
+                disabled={syncing}
+                className="w-full"
+              >
+                {syncing ? 'Syncing...' : 'Sync Now'}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Sync Result Card */}
       {syncResult && (
@@ -276,6 +273,15 @@ export default function TodoistSettingsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Security Note */}
+      <Card className="border-blue-200 bg-blue-50">
+        <CardContent className="pt-6">
+          <p className="text-sm text-blue-900">
+            <strong>🔒 Security Note:</strong> Your Todoist API token is stored securely in environment variables (.env file for development, Google Secret Manager for production). It is never exposed in the browser or stored in the database.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

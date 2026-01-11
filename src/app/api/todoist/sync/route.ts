@@ -2,15 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { syncTodoistReadingList, getLastSync } from '@/lib/services/todoist';
 
 // POST /api/todoist/sync
-// Body: { apiToken, projectId, autoComplete }
+// Body: { projectId, autoComplete }
+// Uses TODOIST_API_TOKEN from environment variables
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { apiToken, projectId, autoComplete = true } = body;
+    const apiToken = process.env.TODOIST_API_TOKEN;
 
-    if (!apiToken || !projectId) {
+    if (!apiToken) {
       return NextResponse.json(
-        { error: 'API token and project ID are required' },
+        { error: 'Todoist API token not configured. Please set TODOIST_API_TOKEN in .env file.' },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const { projectId, autoComplete = true } = body;
+
+    if (!projectId) {
+      return NextResponse.json(
+        { error: 'Project ID is required' },
         { status: 400 }
       );
     }
