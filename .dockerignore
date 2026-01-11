@@ -1,0 +1,39 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Build outputs (we build in Docker)
+.next
+out
+build
+
+# Development files
+*.local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database (local only)
+*.db
+dev.db
+prisma/dev.db
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Misc
+README.md
+.claude
