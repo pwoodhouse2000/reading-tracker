@@ -1,4 +1,3 @@
-import { TodoistApi } from '@doist/todoist-api-typescript';
 import { prisma } from '@/lib/prisma';
 import { searchBooks, parseBookTitle } from './book-api';
 
@@ -14,15 +13,20 @@ export interface SyncResult {
  */
 export async function getTodoistProjects(apiToken: string) {
   try {
-    const api = new TodoistApi(apiToken);
-    const projectsResponse = await api.getProjects();
+    // Use direct API call for more reliable results
+    const response = await fetch('https://api.todoist.com/rest/v2/projects', {
+      headers: {
+        'Authorization': `Bearer ${apiToken}`,
+      },
+    });
 
-    // Handle the response which might be an array or an object with a data property
-    const projectsArray = Array.isArray(projectsResponse)
-      ? projectsResponse
-      : (projectsResponse as any).data || [];
+    if (!response.ok) {
+      throw new Error(`Todoist API error: ${response.status}`);
+    }
 
-    return projectsArray.map((p: any) => ({
+    const projects = await response.json();
+
+    return projects.map((p: any) => ({
       id: p.id,
       name: p.name,
     }));
@@ -45,7 +49,6 @@ export async function syncTodoistReadingList(
   projectId: string,
   autoComplete = true
 ): Promise<SyncResult> {
-  const api = new TodoistApi(apiToken);
   const result: SyncResult = {
     synced: 0,
     errors: [],
@@ -54,13 +57,18 @@ export async function syncTodoistReadingList(
   };
 
   try {
-    // Fetch tasks from the specified project
-    const tasksResponse = await api.getTasks({ projectId });
+    // Fetch tasks from the specified project using REST API directly
+    const tasksResponse = await fetch(`https://api.todoist.com/rest/v2/tasks?project_id=${projectId}`, {
+      headers: {
+        'Authorization': `Bearer ${apiToken}`,
+      },
+    });
 
-    // Handle the response which might be an array or an object with a data property
-    const tasksArray = Array.isArray(tasksResponse)
-      ? tasksResponse
-      : (tasksResponse as any).data || [];
+    if (!tasksResponse.ok) {
+      throw new Error(`Todoist API error: ${tasksResponse.status}`);
+    }
+
+    const tasksArray = await tasksResponse.json();
 
     for (const task of tasksArray) {
       try {
@@ -127,7 +135,12 @@ export async function syncTodoistReadingList(
 
         // Mark task as complete in Todoist if requested
         if (autoComplete) {
-          await api.closeTask(task.id);
+          await fetch(`https://api.todoist.com/rest/v2/tasks/${task.id}/close`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiToken}`,
+            },
+          });
         }
 
         result.synced++;
