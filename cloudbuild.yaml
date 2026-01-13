@@ -43,10 +43,3 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-
-availableSecrets:
-  secretManager:
-    - versionName: projects/$PROJECT_ID/secrets/TURSO_DATABASE_URL/versions/latest
-      env: TURSO_DATABASE_URL
-    - versionName: projects/$PROJECT_ID/secrets/TURSO_AUTH_TOKEN/versions/latest
-      env: TURSO_AUTH_TOKEN
