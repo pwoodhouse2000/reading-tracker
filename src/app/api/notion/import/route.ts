@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { importFromNotion, getLastImport } from '@/lib/services/notion';
+import { requireAuth } from '@/lib/auth-guard';
 
-// POST /api/notion/import
+// POST /api/notion/import (requires auth)
 // Body: { databaseId }
 // Uses NOTION_API_TOKEN from environment variables
 export async function POST(request: NextRequest) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+  
   try {
     const apiToken = process.env.NOTION_API_TOKEN;
 

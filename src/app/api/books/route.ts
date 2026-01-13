@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth-guard';
 
 // GET /api/books - List all books with optional filters
 export async function GET(request: NextRequest) {
@@ -26,8 +27,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/books - Create new book
+// POST /api/books - Create new book (requires auth)
 export async function POST(request: NextRequest) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+  
   try {
     const body = await request.json();
 

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth-guard';
 
 // GET /api/books/[id] - Get single book
 export async function GET(
@@ -31,11 +32,14 @@ export async function GET(
   }
 }
 
-// PATCH /api/books/[id] - Update book
+// PATCH /api/books/[id] - Update book (requires auth)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+  
   try {
     const { id } = await params;
     const body = await request.json();
@@ -80,11 +84,14 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/books/[id] - Delete book
+// DELETE /api/books/[id] - Delete book (requires auth)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+  
   try {
     const { id } = await params;
 

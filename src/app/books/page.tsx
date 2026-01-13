@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { BookList } from '@/components/books/book-list';
 import { Button } from '@/components/ui/button';
-import { Plus, Download } from 'lucide-react';
+import { BookAddButton, TodoistImportButton } from '@/components/books/admin-actions';
 
 // Force dynamic rendering - database queries at runtime
 export const dynamic = 'force-dynamic';
@@ -102,18 +102,8 @@ export default async function BooksPage({ searchParams }: BooksPageProps) {
           </p>
         </div>
         <div className="flex gap-3">
-          <Link href="/settings/todoist">
-            <Button variant="outline" className="rounded-xl border-2">
-              <Download className="h-4 w-4 mr-2" />
-              Import from Todoist
-            </Button>
-          </Link>
-          <Link href="/books/new">
-            <Button className="rounded-xl shadow-lg shadow-primary/25">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Book
-            </Button>
-          </Link>
+          <TodoistImportButton />
+          <BookAddButton />
         </div>
       </div>
 

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncTodoistReadingList, getLastSync } from '@/lib/services/todoist';
+import { requireAuth } from '@/lib/auth-guard';
 
-// POST /api/todoist/sync
+// POST /api/todoist/sync (requires auth)
 // Body: { projectId, autoComplete }
 // Uses TODOIST_API_TOKEN from environment variables
 export async function POST(request: NextRequest) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+  
   try {
     const apiToken = process.env.TODOIST_API_TOKEN;
 

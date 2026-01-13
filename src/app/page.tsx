@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { Button } from '@/components/ui/button';
 import { BookCard } from '@/components/books/book-card';
 import { Card } from '@/components/ui/card';
-import { Plus, BookOpen, Clock, CheckCircle2, Library, ArrowRight, Sparkles } from 'lucide-react';
+import { BookAddButtonLarge, EmptyStateAddButton } from '@/components/books/admin-actions';
+import { BookOpen, Clock, CheckCircle2, Library, ArrowRight, Sparkles } from 'lucide-react';
 
 // Force dynamic rendering - database queries at runtime, not build time
 export const dynamic = 'force-dynamic';
@@ -52,12 +53,7 @@ export default async function Home() {
             Your personal library, beautifully organized.
           </p>
           <div className="flex gap-4 mt-8">
-            <Link href="/books/new">
-              <Button size="lg" className="rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
-                <Plus className="h-5 w-5 mr-2" />
-                Add Book
-              </Button>
-            </Link>
+            <BookAddButtonLarge />
             <Link href="/books">
               <Button size="lg" variant="outline" className="rounded-xl border-2 hover:bg-white/50">
                 <Library className="h-5 w-5 mr-2" />
@@ -198,12 +194,7 @@ export default async function Home() {
               Add your first book and begin tracking your amazing reading adventure. 
               Every great library starts with a single book.
             </p>
-            <Link href="/books/new">
-              <Button size="lg" className="rounded-xl shadow-lg shadow-primary/25">
-                <Plus className="h-5 w-5 mr-2" />
-                Add Your First Book
-              </Button>
-            </Link>
+            <EmptyStateAddButton />
           </div>
         </section>
       )}

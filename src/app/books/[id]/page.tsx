@@ -7,7 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { StatusBadge } from '@/components/books/status-badge';
 import { RatingStars } from '@/components/books/rating-stars';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, BookOpen, Headphones, Tablet, Calendar, Clock, Sparkles } from 'lucide-react';
+import { BookEditButton, AddDetailsButton } from '@/components/books/admin-actions';
+import { ArrowLeft, BookOpen, Headphones, Tablet, Calendar, Clock, Sparkles } from 'lucide-react';
 import { parseMediaTypes } from '@/lib/constants';
 
 interface BookDetailPageProps {
@@ -58,12 +59,7 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
             Back to Library
           </Button>
         </Link>
-        <Link href={`/books/${book.id}/edit`}>
-          <Button className="gap-2 shadow-lg shadow-primary/25">
-            <Edit className="h-4 w-4" />
-            Edit Book
-          </Button>
-        </Link>
+        <BookEditButton bookId={book.id} />
       </div>
 
       {/* Main Content */}
@@ -273,14 +269,9 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
                 <Sparkles className="h-10 w-10 text-gray-300 mx-auto mb-4" />
                 <h3 className="font-semibold text-gray-600 mb-2">No details yet</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Add a summary or your thoughts about this book
+                  A summary or thoughts about this book will appear here
                 </p>
-                <Link href={`/books/${book.id}/edit`}>
-                  <Button variant="outline" size="sm" className="border-2">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Add Details
-                  </Button>
-                </Link>
+                <AddDetailsButton bookId={book.id} />
               </CardContent>
             </Card>
           )}
