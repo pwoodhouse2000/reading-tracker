@@ -13,18 +13,6 @@ steps:
       - 'push'
       - 'gcr.io/$PROJECT_ID/reading-tracker:latest'
 
-  # Run database migrations against Turso
-  - name: 'node:20-slim'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        export DATABASE_URL="$$TURSO_DATABASE_URL"
-        npm ci
-        npx prisma generate
-        npx prisma db push --accept-data-loss
-    secretEnv: ['TURSO_DATABASE_URL', 'TURSO_AUTH_TOKEN']
-
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
