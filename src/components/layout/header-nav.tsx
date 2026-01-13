@@ -5,11 +5,12 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/auth-provider';
 import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Settings, Home, Library, LogOut, Lock, Quote } from 'lucide-react';
+import { BarChart3, Settings, Home, Library, LogOut, Lock, Quote, Sparkles } from 'lucide-react';
 
 const publicNavItems = [
   { href: '/', label: 'Dashboard', icon: Home },
   { href: '/books', label: 'Library', icon: Library },
+  { href: '/discover', label: 'Discover', icon: Sparkles },
   { href: '/notes', label: 'Notes', icon: Quote },
   { href: '/reports', label: 'Reports', icon: BarChart3 },
 ];

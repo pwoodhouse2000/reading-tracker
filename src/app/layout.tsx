@@ -6,6 +6,7 @@ import { AuthProvider } from '@/components/auth/auth-provider';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { HeaderNav } from '@/components/layout/header-nav';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
+import { ReadingChat } from '@/components/ai/reading-chat';
 
 export const metadata: Metadata = {
   title: "Pete's Reading Tracker",
@@ -101,6 +102,9 @@ export default function RootLayout({
 
               {/* PWA Install Prompt */}
               <InstallPrompt />
+
+              {/* AI Chat Widget */}
+              <ReadingChat />
             </div>
           </AuthProvider>
         </ThemeProvider>
