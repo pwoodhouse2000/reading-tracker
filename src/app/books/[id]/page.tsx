@@ -8,7 +8,8 @@ import { StatusBadge } from '@/components/books/status-badge';
 import { RatingStars } from '@/components/books/rating-stars';
 import { Badge } from '@/components/ui/badge';
 import { BookEditButton, AddDetailsButton } from '@/components/books/admin-actions';
-import { ArrowLeft, BookOpen, Headphones, Tablet, Calendar, Clock, Sparkles } from 'lucide-react';
+import { NoteList } from '@/components/notes/note-list';
+import { ArrowLeft, BookOpen, Headphones, Tablet, Calendar, Clock, Sparkles, Quote } from 'lucide-react';
 import { parseMediaTypes } from '@/lib/constants';
 
 interface BookDetailPageProps {
@@ -229,38 +230,27 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
             </Card>
           )}
 
-          {/* Notes */}
-          {book.notes.length > 0 && (
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">
-                  Notes ({book.notes.length})
-                </h3>
-                <div className="space-y-4">
-                  {book.notes.map((note) => (
-                    <div
-                      key={note.id}
-                      className="p-4 bg-gray-50 rounded-xl border border-gray-100"
-                    >
-                      {note.page && (
-                        <p className="text-xs font-medium text-primary mb-2">
-                          Page {note.page}
-                        </p>
-                      )}
-                      <p className="text-sm leading-relaxed">{note.content}</p>
-                      <p className="text-xs text-muted-foreground mt-3">
-                        {new Date(note.createdAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Notes & Quotes */}
+          <Card className="border-0 shadow-lg dark:bg-gray-800">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Quote className="h-5 w-5 text-primary" />
+                Notes & Quotes
+                {book.notes.length > 0 && (
+                  <span className="text-sm font-normal text-muted-foreground">
+                    ({book.notes.length})
+                  </span>
+                )}
+              </h3>
+              <NoteList 
+                notes={book.notes.map(n => ({
+                  ...n,
+                  createdAt: n.createdAt.toISOString(),
+                }))} 
+                bookId={book.id} 
+              />
+            </CardContent>
+          </Card>
 
           {/* Empty state for thoughts/summary */}
           {!book.summary && !book.thoughts && (
