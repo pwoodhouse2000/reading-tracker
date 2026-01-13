@@ -13,7 +13,8 @@ COPY prisma ./prisma/
 # Install dependencies
 RUN npm ci
 
-# Generate Prisma client
+# Generate Prisma client (use dummy URL for generation, real URL is used at runtime)
+ENV DATABASE_URL="file:./dev.db"
 RUN npx prisma generate
 
 # Copy source code
