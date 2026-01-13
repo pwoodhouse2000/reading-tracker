@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/auth-provider';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { Button } from '@/components/ui/button';
-import { BookOpen, BarChart3, Settings, Home, Library, LogIn, LogOut, Lock } from 'lucide-react';
+import { BarChart3, Settings, Home, Library, LogOut, Lock } from 'lucide-react';
 
 const publicNavItems = [
   { href: '/', label: 'Dashboard', icon: Home },
@@ -70,7 +71,10 @@ export function HeaderNav() {
       })}
 
       {/* Separator */}
-      <div className="h-6 w-px bg-gray-200 mx-2 hidden sm:block" />
+      <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2 hidden sm:block" />
+
+      {/* Theme toggle */}
+      <ThemeToggle />
 
       {/* Auth button */}
       {!isLoading && (
