@@ -85,13 +85,19 @@ export function ReadingGoalCard() {
       const response = await fetch('/api/goals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ year: currentYear, targetBooks: target }),
       });
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Goal set response:', data);
         setGoalData(data);
         setShowSetGoal(false);
+        // Re-fetch to ensure we have the latest data
+        fetchData();
+      } else {
+        console.error('Failed to set goal:', response.status, await response.text());
       }
     } catch (error) {
       console.error('Failed to set goal:', error);

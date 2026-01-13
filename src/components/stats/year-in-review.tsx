@@ -63,6 +63,7 @@ interface StatsData {
   yearlyStats: YearlyStats;
   velocity: ReadingVelocity;
   goalProgress: GoalProgress | null;
+  error?: string;
 }
 
 interface YearInReviewProps {
@@ -98,20 +99,21 @@ export function YearInReview({ year }: YearInReviewProps) {
     );
   }
 
-  if (!data) {
+  if (!data || !data.yearlyStats || !data.velocity) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        Failed to load stats
+        {data?.error ? `Error: ${data.error}` : 'Failed to load stats'}
       </div>
     );
   }
 
   const { yearlyStats, velocity, goalProgress } = data;
-  const TrendIcon = velocity.trend === 'up' ? TrendingUp : velocity.trend === 'down' ? TrendingDown : Minus;
-  const trendColor = velocity.trend === 'up' ? 'text-green-500' : velocity.trend === 'down' ? 'text-red-500' : 'text-gray-500';
+  const TrendIcon = velocity?.trend === 'up' ? TrendingUp : velocity?.trend === 'down' ? TrendingDown : Minus;
+  const trendColor = velocity?.trend === 'up' ? 'text-green-500' : velocity?.trend === 'down' ? 'text-red-500' : 'text-gray-500';
 
   // Find best month
-  const bestMonth = [...yearlyStats.byMonth].sort((a, b) => b.booksFinished - a.booksFinished)[0];
+  const byMonth = yearlyStats.byMonth || [];
+  const bestMonth = [...byMonth].sort((a, b) => b.booksFinished - a.booksFinished)[0];
   const maxMonthlyBooks = bestMonth?.booksFinished || 0;
 
   return (
@@ -254,7 +256,7 @@ export function YearInReview({ year }: YearInReviewProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-end gap-2 h-40">
-            {yearlyStats.byMonth.map((month) => {
+            {byMonth.map((month) => {
               const height = maxMonthlyBooks > 0 ? (month.booksFinished / maxMonthlyBooks) * 100 : 0;
               const isBestMonth = month.booksFinished === maxMonthlyBooks && maxMonthlyBooks > 0;
               

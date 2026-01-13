@@ -15,7 +15,10 @@ export async function GET(request: NextRequest) {
     ]);
 
     return NextResponse.json({
-      goal,
+      goal: goal ? {
+        year: goal.year,
+        targetBooks: goal.targetBooks,
+      } : null,
       progress,
     });
   } catch (error) {
@@ -33,7 +36,10 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const { year, targetBooks } = await request.json();
+    const body = await request.json();
+    const { year, targetBooks } = body;
+    
+    console.log('Setting reading goal:', { year, targetBooks });
 
     if (!year || !targetBooks) {
       return NextResponse.json(
@@ -50,10 +56,16 @@ export async function POST(request: NextRequest) {
     }
 
     const goal = await setReadingGoal(year, targetBooks);
+    console.log('Goal saved:', goal);
+    
     const progress = await getGoalProgress(year);
+    console.log('Progress calculated:', progress);
 
     return NextResponse.json({
-      goal,
+      goal: {
+        year: goal.year,
+        targetBooks: goal.targetBooks,
+      },
       progress,
     });
   } catch (error) {
