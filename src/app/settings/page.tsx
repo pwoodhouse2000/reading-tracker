@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, Shield, ChevronRight, Sparkles, Database } from 'lucide-react';
+import { Download, FileText, Shield, ChevronRight, Sparkles, Database, Code2, Share2 } from 'lucide-react';
 
 export default function SettingsPage() {
   return (
@@ -84,8 +84,47 @@ export default function SettingsPage() {
               </div>
             </div>
             <Link href="/settings/notion">
-              <Button variant="outline" className="w-full border-2 hover:bg-gray-50">
+              <Button variant="outline" className="w-full border-2 hover:bg-gray-50 dark:hover:bg-gray-800">
                 Configure Notion
+                <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Embed Widget */}
+        <Card className="group border-0 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2.5 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl text-white shadow-lg">
+                <Code2 className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-xl">Embed Widget</CardTitle>
+                <CardDescription className="text-sm">
+                  Share on your website or blog
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Share2 className="h-4 w-4 text-violet-500" />
+                <span>Show currently reading books</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Share2 className="h-4 w-4 text-violet-500" />
+                <span>Multiple themes available</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Share2 className="h-4 w-4 text-violet-500" />
+                <span>Easy iframe embed code</span>
+              </div>
+            </div>
+            <Link href="/settings/widget">
+              <Button className="w-full bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700">
+                Customize Widget
                 <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>

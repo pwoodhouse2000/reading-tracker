@@ -1,14 +1,33 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import '../styles/globals.css';
 import { BookOpen } from 'lucide-react';
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { HeaderNav } from '@/components/layout/header-nav';
+import { InstallPrompt } from '@/components/pwa/install-prompt';
 
 export const metadata: Metadata = {
   title: "Pete's Reading Tracker",
-  description: 'Track your reading journey',
+  description: 'Track your reading progress, set goals, and share what you\'re reading',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: "Pete's Reading",
+  },
+  icons: {
+    icon: '/icons/icon.svg',
+    apple: '/icons/icon.svg',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#8b5cf6',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -79,6 +98,9 @@ export default function RootLayout({
                   </div>
                 </div>
               </footer>
+
+              {/* PWA Install Prompt */}
+              <InstallPrompt />
             </div>
           </AuthProvider>
         </ThemeProvider>
