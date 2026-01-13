@@ -83,6 +83,15 @@ model NotionImport {
   errorDetails  String?
 }
 
+// Reading Goals
+model ReadingGoal {
+  id          String   @id @default(cuid())
+  year        Int      @unique  // e.g., 2026
+  targetBooks Int      // Number of books to read
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // Enums
 enum ReadingStatus {
   TO_READ

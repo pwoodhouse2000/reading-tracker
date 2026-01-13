@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ReportFilters } from '@/components/reports/report-filters';
 import { MonthlyChart } from '@/components/reports/monthly-chart';
+import { YearInReview } from '@/components/stats/year-in-review';
 import { BookCard } from '@/components/books/book-card';
+import { BarChart3, Sparkles } from 'lucide-react';
 
 interface ReportData {
   year: number;
@@ -36,6 +38,7 @@ interface ReportData {
 
 export default function ReportsPage() {
   const currentYear = new Date().getFullYear();
+  const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('overview');
   const [dateRange, setDateRange] = useState<'year' | 'allTime' | 'custom'>('year');
   const [year, setYear] = useState(currentYear);
   const [category, setCategory] = useState('all');
@@ -102,14 +105,66 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Reading Reports</h1>
-        <p className="text-muted-foreground mt-1">
-          Analyze your reading habits and discover insights
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold">Reading Reports</h1>
+          <p className="text-muted-foreground mt-1">
+            Analyze your reading habits and discover insights
+          </p>
+        </div>
+        
+        {/* View Mode Toggle */}
+        <div className="flex items-center gap-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur p-1 rounded-xl">
+          <button
+            onClick={() => setViewMode('overview')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              viewMode === 'overview'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            <Sparkles className="h-4 w-4" />
+            Year in Review
+          </button>
+          <button
+            onClick={() => setViewMode('detailed')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              viewMode === 'detailed'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            <BarChart3 className="h-4 w-4" />
+            Detailed Reports
+          </button>
+        </div>
       </div>
 
-      <ReportFilters
+      {/* Year Selector for Overview Mode */}
+      {viewMode === 'overview' && (
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-muted-foreground">Year:</label>
+          <select
+            value={year}
+            onChange={(e) => setYear(parseInt(e.target.value))}
+            className="px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          >
+            {Array.from({ length: 5 }, (_, i) => currentYear - i).map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Year in Review Mode */}
+      {viewMode === 'overview' && (
+        <YearInReview year={year} />
+      )}
+
+      {/* Detailed Reports Mode */}
+      {viewMode === 'detailed' && (
+        <>
+          <ReportFilters
         dateRange={dateRange}
         year={year}
         category={category}
@@ -284,6 +339,8 @@ export default function ReportsPage() {
             </p>
           </CardContent>
         </Card>
+      )}
+        </>
       )}
     </div>
   );
