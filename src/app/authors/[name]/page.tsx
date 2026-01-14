@@ -19,7 +19,10 @@ import {
   Headphones,
   Newspaper,
   ShoppingBag,
-  Globe
+  Globe,
+  Play,
+  Clock,
+  Mic
 } from 'lucide-react';
 
 interface AuthorData {
@@ -68,10 +71,35 @@ interface AuthorData {
     interviews: string;
     podcasts: string;
   };
+  podcasts: {
+    episodes: Array<{
+      id: string;
+      title: string;
+      description: string;
+      podcastTitle: string;
+      podcastImage: string;
+      audioUrl: string;
+      listennotesUrl: string;
+      publishDate: string;
+      durationSeconds: number;
+    }>;
+    totalFound: number;
+    enabled: boolean;
+  };
 }
 
 interface PageProps {
   params: Promise<{ name: string }>;
+}
+
+function formatDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes} min`;
 }
 
 export default function AuthorPage({ params }: PageProps) {
@@ -381,6 +409,112 @@ export default function AuthorPage({ params }: PageProps) {
             ))}
           </div>
         </section>
+      )}
+
+      {/* Podcast Episodes */}
+      {data.podcasts.episodes.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Mic className="h-5 w-5 text-purple-500" />
+            Podcast Appearances
+            {data.podcasts.totalFound > data.podcasts.episodes.length && (
+              <span className="text-sm font-normal text-muted-foreground">
+                (showing {data.podcasts.episodes.length} of {data.podcasts.totalFound})
+              </span>
+            )}
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {data.podcasts.episodes.map((episode) => (
+              <a 
+                key={episode.id}
+                href={episode.listennotesUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Card className="border-0 shadow-lg dark:bg-gray-800 hover:shadow-xl transition-all hover:scale-[1.02] h-full">
+                  <CardContent className="p-4 flex gap-4">
+                    <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden shadow-md">
+                      {episode.podcastImage ? (
+                        <Image
+                          src={episode.podcastImage}
+                          alt={episode.podcastTitle}
+                          fill
+                          className="object-cover"
+                          sizes="80px"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
+                          <Headphones className="h-8 w-8 text-white/80" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                        <Play className="h-8 w-8 text-white fill-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold line-clamp-2 text-sm">{episode.title}</h3>
+                      <p className="text-xs text-muted-foreground mt-1">{episode.podcastTitle}</p>
+                      <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(episode.publishDate).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatDuration(episode.durationSeconds)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                        {episode.description}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </a>
+            ))}
+          </div>
+          {data.podcasts.totalFound > data.podcasts.episodes.length && (
+            <div className="mt-4 text-center">
+              <a
+                href={data.externalLinks.podcasts}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+              >
+                Search for more podcasts
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Podcast search not enabled notice */}
+      {!data.podcasts.enabled && (
+        <Card className="border-0 shadow-lg dark:bg-gray-800">
+          <CardContent className="p-6 text-center">
+            <Headphones className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <h3 className="font-semibold mb-2">Podcast Search Available</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Find podcast interviews and appearances by {data.name.split(' ').pop()}
+            </p>
+            <a
+              href={data.externalLinks.podcasts}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" className="gap-2">
+                <Search className="h-4 w-4" />
+                Search Podcasts
+              </Button>
+            </a>
+          </CardContent>
+        </Card>
       )}
 
       {/* Other Works */}

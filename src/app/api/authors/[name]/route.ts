@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthorData } from '@/lib/services/authors';
+import { searchPodcastEpisodes, isPodcastSearchEnabled } from '@/lib/services/podcasts';
 
 interface RouteParams {
   params: Promise<{ name: string }>;
@@ -12,8 +13,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const { name } = await params;
     const authorName = decodeURIComponent(name);
 
-    // Fetch external author data and user's books in parallel
-    const [externalData, userBooks] = await Promise.all([
+    // Fetch external author data, user's books, and podcasts in parallel
+    const [externalData, userBooks, podcastData] = await Promise.all([
       getAuthorData(authorName),
       prisma.book.findMany({
         where: {
@@ -33,6 +34,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         },
         orderBy: { dateFinished: 'desc' },
       }),
+      // Only search podcasts if API is configured
+      isPodcastSearchEnabled() ? searchPodcastEpisodes(authorName, 8) : Promise.resolve(null),
     ]);
 
     // Calculate user stats for this author
@@ -89,6 +92,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       },
       userNotes: allNotes.slice(0, 10), // Limit to 10 most recent notes
       externalLinks,
+      // Podcast data (if available)
+      podcasts: podcastData ? {
+        episodes: podcastData.episodes,
+        totalFound: podcastData.total,
+        enabled: true,
+      } : {
+        episodes: [],
+        totalFound: 0,
+        enabled: isPodcastSearchEnabled(),
+      },
     });
   } catch (error) {
     console.error('Error fetching author data:', error);
