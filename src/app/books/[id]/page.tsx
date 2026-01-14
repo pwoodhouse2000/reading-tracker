@@ -191,7 +191,13 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
               {book.title}
             </h1>
             <p className="text-2xl text-muted-foreground mt-3">
-              by {book.author}
+              by{' '}
+              <Link 
+                href={`/authors/${encodeURIComponent(book.author)}`}
+                className="hover:text-primary hover:underline transition-colors"
+              >
+                {book.author}
+              </Link>
             </p>
 
             {book.rating && (

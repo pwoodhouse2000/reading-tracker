@@ -103,6 +103,12 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
     router.push(`/books?${filter}`);
   };
 
+  const handleAuthorClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/authors/${encodeURIComponent(book.author)}`);
+  };
+
   const handleStatusClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -196,9 +202,12 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
                 <h3 className="font-semibold text-sm line-clamp-1 group-hover:text-primary transition-colors">
                   {book.title}
                 </h3>
-                <p className="text-sm text-muted-foreground line-clamp-1">
+                <button 
+                  onClick={handleAuthorClick}
+                  className="text-sm text-muted-foreground line-clamp-1 hover:text-primary hover:underline transition-colors text-left"
+                >
                   {book.author}
-                </p>
+                </button>
               </div>
 
               <div className="flex items-center gap-3 flex-shrink-0">
@@ -311,9 +320,12 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
               <h3 className="font-semibold text-base line-clamp-2 leading-tight group-hover:text-primary transition-colors">
                 {book.title}
               </h3>
-              <p className="text-sm text-muted-foreground line-clamp-1">
+              <button 
+                onClick={handleAuthorClick}
+                className="text-sm text-muted-foreground line-clamp-1 hover:text-primary hover:underline transition-colors text-left"
+              >
                 {book.author}
-              </p>
+              </button>
 
               <div className="flex flex-wrap gap-1.5 pt-1">
                 <button
