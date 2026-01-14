@@ -37,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
+    <html lang="en" suppressHydrationWarning className="h-full">
+      <body className="h-full bg-background text-foreground">
         <ThemeProvider>
           <AuthProvider>
             {/* Decorative background - light mode */}
@@ -57,7 +57,7 @@ export default function RootLayout({
               <div className="absolute inset-0 bg-noise opacity-[0.03]" />
             </div>
 
-            <div className="min-h-screen">
+            <div className="relative min-h-screen flex flex-col">
               {/* Header */}
               <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
                 <div className="container mx-auto px-6 py-4">
@@ -83,12 +83,12 @@ export default function RootLayout({
               </header>
 
               {/* Main content */}
-              <main className="container mx-auto px-6 py-8">
+              <main className="flex-1 container mx-auto px-6 py-8">
                 {children}
               </main>
 
               {/* Footer */}
-              <footer className="border-t border-border bg-card/50 backdrop-blur-sm mt-auto">
+              <footer className="border-t border-border bg-card/50 backdrop-blur-sm">
                 <div className="container mx-auto px-6 py-6">
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <p>© {new Date().getFullYear()} Pete&apos;s Reading Tracker</p>
