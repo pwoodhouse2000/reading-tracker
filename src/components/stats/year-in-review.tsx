@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProgressRing } from './progress-ring';
 import { 
@@ -12,7 +13,8 @@ import {
   Calendar,
   Clock,
   Award,
-  Sparkles
+  Sparkles,
+  ChevronRight
 } from 'lucide-react';
 
 interface YearlyStats {
@@ -317,20 +319,32 @@ export function YearInReview({ year }: YearInReviewProps) {
                 </svg>
               </div>
               <div className="flex-1 space-y-3">
-                <div className="flex items-center justify-between">
+                <Link 
+                  href={`/books?category=FICTION&status=FINISHED`}
+                  className="flex items-center justify-between p-2 -m-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                >
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-violet-500" />
                     <span>Fiction</span>
                   </div>
-                  <span className="font-semibold">{yearlyStats.byCategory.fiction}</span>
-                </div>
-                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{yearlyStats.byCategory.fiction}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </Link>
+                <Link 
+                  href={`/books?category=NON_FICTION&status=FINISHED`}
+                  className="flex items-center justify-between p-2 -m-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                >
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-emerald-500" />
                     <span>Non-Fiction</span>
                   </div>
-                  <span className="font-semibold">{yearlyStats.byCategory.nonFiction}</span>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">{yearlyStats.byCategory.nonFiction}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </Link>
               </div>
             </div>
           </CardContent>
@@ -345,14 +359,21 @@ export function YearInReview({ year }: YearInReviewProps) {
             {yearlyStats.topSubCategories.length > 0 ? (
               <div className="space-y-3">
                 {yearlyStats.topSubCategories.map((cat, index) => (
-                  <div key={cat.name} className="flex items-center gap-3">
+                  <Link 
+                    key={cat.name} 
+                    href={`/books?subCategory=${encodeURIComponent(cat.name)}&status=FINISHED`}
+                    className="flex items-center gap-3 p-2 -mx-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                  >
                     <span className="text-lg font-bold text-muted-foreground w-6">
                       #{index + 1}
                     </span>
                     <div className="flex-1">
                       <div className="flex justify-between mb-1">
                         <span className="font-medium">{cat.name}</span>
-                        <span className="text-muted-foreground">{cat.count} books</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">{cat.count} books</span>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
                       </div>
                       <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div 
@@ -361,7 +382,7 @@ export function YearInReview({ year }: YearInReviewProps) {
                         />
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (

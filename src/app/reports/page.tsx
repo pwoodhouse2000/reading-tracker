@@ -45,6 +45,7 @@ export default function ReportsPage() {
   const [subCategory, setSubCategory] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [minRating, setMinRating] = useState(0);
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -74,6 +75,11 @@ export default function ReportsPage() {
           params.set('subCategory', subCategory);
         }
 
+        // Add minimum rating filter
+        if (minRating > 0) {
+          params.set('minRating', minRating.toString());
+        }
+
         const response = await fetch(`/api/reports?${params.toString()}`);
         const reportData = await response.json();
         setData(reportData);
@@ -85,7 +91,7 @@ export default function ReportsPage() {
     }
 
     fetchReports();
-  }, [dateRange, year, category, subCategory, startDate, endDate]);
+  }, [dateRange, year, category, subCategory, startDate, endDate, minRating]);
 
   if (loading) {
     return (
@@ -171,12 +177,14 @@ export default function ReportsPage() {
         subCategory={subCategory}
         startDate={startDate}
         endDate={endDate}
+        minRating={minRating}
         onDateRangeChange={setDateRange}
         onYearChange={setYear}
         onCategoryChange={setCategory}
         onSubCategoryChange={setSubCategory}
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
+        onMinRatingChange={setMinRating}
       />
 
       {/* Statistics Cards */}
@@ -315,7 +323,7 @@ export default function ReportsPage() {
       {data.bestBooks.length > 0 && (
         <div>
           <h2 className="text-2xl font-bold mb-4">
-            Best Books
+            {minRating > 0 ? `${minRating}+ Star Books` : 'All Finished Books'}
             {dateRange === 'allTime' && ' of All Time'}
             {dateRange === 'year' && ` of ${year}`}
             {dateRange === 'custom' && ' (Custom Range)'}
@@ -334,8 +342,8 @@ export default function ReportsPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">
-              No books with 4+ stars found for the selected filters.
-              Start rating your finished books to see them here!
+              No books found for the selected filters.
+              {minRating > 0 && ` Try lowering the minimum rating from ${minRating}+ stars.`}
             </p>
           </CardContent>
         </Card>

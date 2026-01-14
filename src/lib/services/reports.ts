@@ -31,6 +31,7 @@ export interface ReportFilters {
   endDate?: Date;
   category?: 'FICTION' | 'NON_FICTION';
   subCategory?: string;
+  minRating?: number;
 }
 
 /**
@@ -42,8 +43,12 @@ export async function getBestBooks(
 ) {
   const whereClause: any = {
     status: 'FINISHED',
-    rating: { gte: 4 }, // Only 4 and 5 star books
   };
+
+  // Apply minimum rating filter (default to showing all if not specified)
+  if (filters.minRating && filters.minRating > 0) {
+    whereClause.rating = { gte: filters.minRating };
+  }
 
   if (filters.startDate || filters.endDate) {
     whereClause.dateFinished = {};

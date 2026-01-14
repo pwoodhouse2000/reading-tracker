@@ -114,8 +114,8 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
 
               {book.dateStarted && (
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Calendar className="h-5 w-5 text-blue-600" />
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                    <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Started</p>
@@ -132,8 +132,8 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
 
               {book.dateFinished && (
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-emerald-100 rounded-lg">
-                    <Clock className="h-5 w-5 text-emerald-600" />
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900 rounded-lg">
+                    <Clock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Finished</p>
@@ -149,7 +149,7 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
               )}
 
               {book.isbn && (
-                <div className="pt-3 border-t border-gray-100">
+                <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
                   <p className="text-xs text-muted-foreground">ISBN</p>
                   <p className="font-mono text-sm">{book.isbn}</p>
                 </div>
@@ -171,8 +171,8 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
                   variant="outline" 
                   className={`cursor-pointer ${
                     book.category === 'FICTION' 
-                      ? 'border-violet-300 text-violet-700 bg-violet-50 hover:bg-violet-100' 
-                      : 'border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                      ? 'border-violet-300 text-violet-700 bg-violet-50 hover:bg-violet-100 dark:border-violet-700 dark:text-violet-300 dark:bg-violet-950 dark:hover:bg-violet-900' 
+                      : 'border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-300 dark:bg-emerald-950 dark:hover:bg-emerald-900'
                   }`}
                 >
                   {book.category === 'FICTION' ? 'Fiction' : 'Non-Fiction'}
@@ -180,7 +180,7 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
               </Link>
               {book.subCategory && (
                 <Link href={`/books?subCategory=${encodeURIComponent(book.subCategory)}`} className="hover:scale-105 transition-transform">
-                  <Badge variant="outline" className="cursor-pointer hover:bg-gray-100">
+                  <Badge variant="outline" className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
                     {book.subCategory}
                   </Badge>
                 </Link>
@@ -218,12 +218,12 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
 
           {/* My Thoughts */}
           {book.thoughts && (
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50/80 to-orange-50/80">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50/80 to-orange-50/80 dark:from-amber-950/50 dark:to-orange-950/50">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-3 text-amber-900">
+                <h3 className="text-lg font-semibold mb-3 text-amber-900 dark:text-amber-200">
                   My Thoughts
                 </h3>
-                <p className="text-amber-800/80 leading-relaxed whitespace-pre-line">
+                <p className="text-amber-800/80 dark:text-amber-100/80 leading-relaxed whitespace-pre-line">
                   {book.thoughts}
                 </p>
               </CardContent>
@@ -254,10 +254,10 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
 
           {/* Empty state for thoughts/summary */}
           {!book.summary && !book.thoughts && (
-            <Card className="border-2 border-dashed border-gray-200">
+            <Card className="border-2 border-dashed border-gray-200 dark:border-gray-700">
               <CardContent className="p-8 text-center">
-                <Sparkles className="h-10 w-10 text-gray-300 mx-auto mb-4" />
-                <h3 className="font-semibold text-gray-600 mb-2">No details yet</h3>
+                <Sparkles className="h-10 w-10 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="font-semibold text-gray-600 dark:text-gray-300 mb-2">No details yet</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   A summary or thoughts about this book will appear here
                 </p>

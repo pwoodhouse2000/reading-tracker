@@ -17,8 +17,14 @@ export async function GET(request: NextRequest) {
     const allTimeParam = searchParams.get('allTime');
     const startDateParam = searchParams.get('startDate');
     const endDateParam = searchParams.get('endDate');
+    const minRatingParam = searchParams.get('minRating');
 
     const filters: ReportFilters = {};
+
+    // Handle minimum rating filter
+    if (minRatingParam) {
+      filters.minRating = parseInt(minRatingParam);
+    }
 
     // Handle category filter
     if (categoryParam && categoryParam !== 'all') {
