@@ -56,7 +56,7 @@ export default async function Home() {
           <div className="flex gap-4 mt-8">
             <BookAddButtonLarge />
             <Link href="/books">
-              <Button size="lg" variant="outline" className="rounded-xl border-2 hover:bg-white/50">
+              <Button size="lg" variant="outline">
                 <Library className="h-5 w-5 mr-2" />
                 Browse Library
               </Button>

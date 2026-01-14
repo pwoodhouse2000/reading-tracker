@@ -1,11 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { ReadingStatus, Category } from '@prisma/client';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+}
+
+interface BookData {
+  title: string;
+  author: string;
+  status: ReadingStatus;
+  category: Category;
+  subCategory: string | null;
+  rating: number | null;
+  dateStarted: Date | null;
+  dateFinished: Date | null;
+  thoughts: string | null;
 }
 
 // POST /api/ai/chat - Chat about reading history
@@ -45,7 +58,7 @@ export async function POST(request: NextRequest) {
           thoughts: true,
         },
         orderBy: { updatedAt: 'desc' },
-      }),
+      }) as Promise<BookData[]>,
       prisma.note.findMany({
         select: {
           content: true,
@@ -64,17 +77,17 @@ export async function POST(request: NextRequest) {
     ]);
 
     // Organize data by status
-    const finished = allBooks.filter(b => b.status === 'FINISHED');
-    const reading = allBooks.filter(b => b.status === 'READING');
-    const toRead = allBooks.filter(b => b.status === 'TO_READ' || b.status === 'NEXT_UP');
+    const finished = allBooks.filter((b) => b.status === 'FINISHED');
+    const reading = allBooks.filter((b) => b.status === 'READING');
+    const toRead = allBooks.filter((b) => b.status === 'TO_READ' || b.status === 'NEXT_UP');
 
     // Calculate stats
     const currentYear = new Date().getFullYear();
-    const booksThisYear = finished.filter(b => 
+    const booksThisYear = finished.filter((b) => 
       b.dateFinished && new Date(b.dateFinished).getFullYear() === currentYear
     );
-    const avgRating = finished.filter(b => b.rating).reduce((sum, b) => sum + (b.rating || 0), 0) / 
-      (finished.filter(b => b.rating).length || 1);
+    const avgRating = finished.filter((b) => b.rating).reduce((sum, b) => sum + (b.rating || 0), 0) / 
+      (finished.filter((b) => b.rating).length || 1);
 
     // Build context
     const readingContext = `
@@ -92,24 +105,24 @@ export async function POST(request: NextRequest) {
 ${goals[0] ? `${goals[0].year} goal: ${goals[0].targetBooks} books` : 'No goal set'}
 
 ### Currently Reading
-${reading.map(b => `- "${b.title}" by ${b.author}`).join('\n') || 'Nothing currently'}
+${reading.map((b) => `- "${b.title}" by ${b.author}`).join('\n') || 'Nothing currently'}
 
 ### Recently Finished (last 10)
-${finished.slice(0, 10).map(b => 
+${finished.slice(0, 10).map((b) => 
   `- "${b.title}" by ${b.author}${b.rating ? ` (${b.rating}★)` : ''}${b.thoughts ? ` - Your thoughts: "${b.thoughts.slice(0, 100)}..."` : ''}`
 ).join('\n') || 'None yet'}
 
 ### Highly Rated Books (4-5 stars)
-${finished.filter(b => b.rating && b.rating >= 4).slice(0, 10).map(b => 
+${finished.filter((b) => b.rating && b.rating >= 4).slice(0, 10).map((b) => 
   `- "${b.title}" by ${b.author} (${b.rating}★)`
 ).join('\n') || 'None yet'}
 
 ### Books by Category
-- Fiction: ${allBooks.filter(b => b.category === 'FICTION').length}
-- Non-Fiction: ${allBooks.filter(b => b.category === 'NON_FICTION').length}
+- Fiction: ${allBooks.filter((b) => b.category === 'FICTION').length}
+- Non-Fiction: ${allBooks.filter((b) => b.category === 'NON_FICTION').length}
 
 ### Your Notes (recent)
-${notes.slice(0, 10).map(n => 
+${notes.slice(0, 10).map((n) => 
   `- From "${n.book.title}": "${n.content.slice(0, 100)}..."`
 ).join('\n') || 'No notes yet'}
 

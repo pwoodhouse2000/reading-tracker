@@ -63,14 +63,14 @@ export function AIRecommendations() {
   // Initial state - show button to load
   if (!hasLoaded && !isLoading) {
     return (
-      <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
+      <Card className="shadow-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-900">
         <CardContent className="p-6">
           <div className="text-center space-y-4">
             <div className="inline-flex p-4 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl text-white shadow-lg">
               <Sparkles className="h-8 w-8" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold mb-2">AI Book Recommendations</h3>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">AI Book Recommendations</h3>
               <p className="text-muted-foreground mb-4">
                 Get personalized book suggestions based on your reading history and preferences
               </p>
@@ -108,7 +108,7 @@ export function AIRecommendations() {
     const isKeyError = error.includes('Invalid API key');
     
     return (
-      <Card className="border-0 shadow-xl border-red-200 dark:border-red-900">
+      <Card className="shadow-xl border-red-200 dark:border-red-900/50">
         <CardContent className="p-6">
           <div className="flex items-start gap-3 text-red-600 dark:text-red-400">
             <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
@@ -148,7 +148,7 @@ export function AIRecommendations() {
 
   // Results
   return (
-    <Card className="border-0 shadow-xl">
+    <Card className="shadow-xl">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -175,13 +175,13 @@ export function AIRecommendations() {
         {data?.recommendations.map((rec, index) => (
           <div 
             key={index}
-            className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors border border-border"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <BookOpen className="h-4 w-4 text-amber-500" />
-                  <h4 className="font-semibold">{rec.title}</h4>
+                  <h4 className="font-semibold text-foreground">{rec.title}</h4>
                   {rec.confidence === 'high' && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs">
                       <ThumbsUp className="h-3 w-3" />
@@ -190,7 +190,7 @@ export function AIRecommendations() {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground mb-2">by {rec.author}</p>
-                <p className="text-sm">{rec.reason}</p>
+                <p className="text-sm text-foreground">{rec.reason}</p>
               </div>
               <Button
                 variant="ghost"
@@ -205,7 +205,7 @@ export function AIRecommendations() {
         ))}
 
         {data?.context.favoriteAuthors && data.context.favoriteAuthors.length > 0 && (
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="pt-4 border-t border-border">
             <p className="text-xs text-muted-foreground">
               <span className="font-medium">Your favorite authors:</span>{' '}
               {data.context.favoriteAuthors.join(', ')}

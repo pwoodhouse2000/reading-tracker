@@ -59,7 +59,7 @@ export default function RootLayout({
 
             <div className="min-h-screen">
               {/* Header */}
-              <header className="sticky top-0 z-50 border-b border-white/20 dark:border-white/10 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl">
+              <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
                 <div className="container mx-auto px-6 py-4">
                   <div className="flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-3 group">
@@ -88,7 +88,7 @@ export default function RootLayout({
               </main>
 
               {/* Footer */}
-              <footer className="border-t border-white/20 dark:border-white/10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm mt-auto">
+              <footer className="border-t border-border bg-card/50 backdrop-blur-sm mt-auto">
                 <div className="container mx-auto px-6 py-6">
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <p>© {new Date().getFullYear()} Pete&apos;s Reading Tracker</p>

@@ -19,29 +19,29 @@ export default function DiscoverPage() {
 
       {/* How it works */}
       <div className="grid md:grid-cols-3 gap-4">
-        <div className="p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur text-center">
+        <div className="p-4 rounded-xl bg-card/80 backdrop-blur text-center border border-border">
           <div className="inline-flex p-2 bg-violet-100 dark:bg-violet-900/30 rounded-lg mb-3">
             <BookOpen className="h-5 w-5 text-violet-600 dark:text-violet-400" />
           </div>
-          <h3 className="font-semibold mb-1">Analyzes Your Books</h3>
+          <h3 className="font-semibold mb-1 text-foreground">Analyzes Your Books</h3>
           <p className="text-sm text-muted-foreground">
             Reviews your reading history and highly-rated books
           </p>
         </div>
-        <div className="p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur text-center">
+        <div className="p-4 rounded-xl bg-card/80 backdrop-blur text-center border border-border">
           <div className="inline-flex p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg mb-3">
             <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" />
           </div>
-          <h3 className="font-semibold mb-1">Finds Patterns</h3>
+          <h3 className="font-semibold mb-1 text-foreground">Finds Patterns</h3>
           <p className="text-sm text-muted-foreground">
             Identifies your favorite authors, genres, and themes
           </p>
         </div>
-        <div className="p-4 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur text-center">
+        <div className="p-4 rounded-xl bg-card/80 backdrop-blur text-center border border-border">
           <div className="inline-flex p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg mb-3">
             <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <h3 className="font-semibold mb-1">Suggests Books</h3>
+          <h3 className="font-semibold mb-1 text-foreground">Suggests Books</h3>
           <p className="text-sm text-muted-foreground">
             Recommends similar books you'll likely enjoy
           </p>

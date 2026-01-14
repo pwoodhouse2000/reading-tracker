@@ -133,7 +133,7 @@ export function ReadingChat() {
 
         <CardContent className="p-0">
           {/* Messages Area */}
-          <div className="h-80 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
+          <div className="h-80 overflow-y-auto p-4 space-y-4 bg-muted/30">
             {messages.length === 0 ? (
               <div className="space-y-4">
                 <div className="text-center text-muted-foreground text-sm py-4">
@@ -146,10 +146,10 @@ export function ReadingChat() {
                     <button
                       key={index}
                       onClick={() => handleSuggestedPrompt(prompt.text)}
-                      className="w-full flex items-center gap-2 p-2 text-sm text-left rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      className="w-full flex items-center gap-2 p-2 text-sm text-left rounded-lg bg-card hover:bg-accent/50 transition-colors border border-border"
                     >
                       <prompt.icon className="h-4 w-4 text-violet-500 flex-shrink-0" />
-                      <span>{prompt.text}</span>
+                      <span className="text-foreground">{prompt.text}</span>
                     </button>
                   ))}
                 </div>
@@ -170,14 +170,14 @@ export function ReadingChat() {
                       className={`max-w-[80%] p-3 rounded-2xl text-sm ${
                         msg.role === 'user'
                           ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-br-md'
-                          : 'bg-white dark:bg-gray-800 text-foreground rounded-bl-md shadow-sm'
+                          : 'bg-card text-foreground rounded-bl-md shadow-sm border border-border'
                       }`}
                     >
                       <p className="whitespace-pre-wrap">{msg.content}</p>
                     </div>
                     {msg.role === 'user' && (
-                      <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                        <User className="h-4 w-4" />
+                      <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <User className="h-4 w-4 text-muted-foreground" />
                       </div>
                     )}
                   </div>
@@ -187,20 +187,20 @@ export function ReadingChat() {
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
                       <Bot className="h-4 w-4 text-white" />
                     </div>
-                    <div className="bg-white dark:bg-gray-800 p-3 rounded-2xl rounded-bl-md shadow-sm">
+                    <div className="bg-card p-3 rounded-2xl rounded-bl-md shadow-sm border border-border">
                       <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
                     </div>
                   </div>
                 )}
                 {error && (
                   <div className="text-center text-sm py-2 px-4">
-                    <p className="text-red-500">{error}</p>
+                    <p className="text-red-500 dark:text-red-400">{error}</p>
                     {error.includes('quota') || error.includes('usage limit') ? (
                       <a 
                         href="https://platform.openai.com/settings/organization/billing/overview"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-block mt-1 text-xs text-blue-500 hover:underline"
+                        className="inline-block mt-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
                       >
                         Check OpenAI Billing →
                       </a>
@@ -213,7 +213,7 @@ export function ReadingChat() {
           </div>
 
           {/* Input Area */}
-          <form onSubmit={handleSubmit} className="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <form onSubmit={handleSubmit} className="p-3 border-t border-border bg-card">
             <div className="flex gap-2">
               <input
                 ref={inputRef}
@@ -222,7 +222,7 @@ export function ReadingChat() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about your reading..."
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 rounded-full border-0 focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                className="flex-1 px-4 py-2 text-sm bg-input text-foreground rounded-full border-0 focus:ring-2 focus:ring-violet-500 focus:outline-none placeholder:text-muted-foreground"
               />
               <Button
                 type="submit"

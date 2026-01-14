@@ -33,14 +33,14 @@ export function ThemeToggle() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-9 h-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-white/10 transition-all"
+        className="flex items-center justify-center w-9 h-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
         aria-label="Toggle theme"
       >
         <CurrentIcon className="h-4 w-4" />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-36 py-1 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+        <div className="absolute right-0 top-full mt-2 w-36 py-1 bg-card rounded-xl shadow-xl border border-border z-50">
           {themes.map(({ value, label, icon: Icon }) => (
             <button
               key={value}
@@ -51,7 +51,7 @@ export function ThemeToggle() {
               className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
                 theme === value
                   ? 'text-primary bg-primary/10'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-gray-700'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
             >
               <Icon className="h-4 w-4" />
