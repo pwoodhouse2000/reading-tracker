@@ -104,22 +104,41 @@ export function AIRecommendations() {
 
   // Error state
   if (error) {
+    const isQuotaError = error.includes('quota') || error.includes('usage limit');
+    const isKeyError = error.includes('Invalid API key');
+    
     return (
       <Card className="border-0 shadow-xl border-red-200 dark:border-red-900">
         <CardContent className="p-6">
           <div className="flex items-start gap-3 text-red-600 dark:text-red-400">
             <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="font-medium">Couldn't get recommendations</p>
+              <p className="font-medium">
+                {isQuotaError ? 'OpenAI Quota Exceeded' : 
+                 isKeyError ? 'Invalid API Key' : 
+                 "Couldn't get recommendations"}
+              </p>
               <p className="text-sm mt-1 opacity-80">{error}</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={fetchRecommendations}
-                className="mt-3"
-              >
-                Try Again
-              </Button>
+              {isQuotaError && (
+                <a 
+                  href="https://platform.openai.com/settings/organization/billing/overview"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm mt-2 text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Check OpenAI Billing →
+                </a>
+              )}
+              {!isQuotaError && !isKeyError && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={fetchRecommendations}
+                  className="mt-3"
+                >
+                  Try Again
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>

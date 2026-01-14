@@ -71,7 +71,9 @@ export function ReadingChat() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to get response');
+        // Include details in error message if available
+        const errorMsg = data.details || data.error || 'Failed to get response';
+        throw new Error(errorMsg);
       }
 
       const assistantMessage: Message = { role: 'assistant', content: data.reply };
@@ -191,8 +193,18 @@ export function ReadingChat() {
                   </div>
                 )}
                 {error && (
-                  <div className="text-center text-red-500 text-sm py-2">
-                    {error}
+                  <div className="text-center text-sm py-2 px-4">
+                    <p className="text-red-500">{error}</p>
+                    {error.includes('quota') || error.includes('usage limit') ? (
+                      <a 
+                        href="https://platform.openai.com/settings/organization/billing/overview"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block mt-1 text-xs text-blue-500 hover:underline"
+                      >
+                        Check OpenAI Billing →
+                      </a>
+                    ) : null}
                   </div>
                 )}
                 <div ref={messagesEndRef} />

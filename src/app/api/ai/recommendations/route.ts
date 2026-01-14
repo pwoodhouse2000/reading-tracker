@@ -102,12 +102,46 @@ Please recommend 5 books I might enjoy, with explanations.`;
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('OpenAI API error:', error);
-      return NextResponse.json(
-        { error: 'Failed to get recommendations' },
-        { status: 500 }
-      );
+      const errorText = await response.text();
+      console.error('OpenAI API error:', errorText);
+      
+      // Parse and return more helpful error messages
+      try {
+        const errorJson = JSON.parse(errorText);
+        const errorMessage = errorJson.error?.message || 'Unknown error';
+        
+        if (errorMessage.includes('quota')) {
+          return NextResponse.json(
+            { 
+              error: 'OpenAI quota exceeded',
+              details: 'The API key has reached its usage limit. Please check your OpenAI billing settings.',
+              code: 'QUOTA_EXCEEDED'
+            },
+            { status: 429 }
+          );
+        }
+        
+        if (errorMessage.includes('invalid_api_key') || errorMessage.includes('Incorrect API key')) {
+          return NextResponse.json(
+            { 
+              error: 'Invalid API key',
+              details: 'The OpenAI API key is invalid. Please check your configuration.',
+              code: 'INVALID_KEY'
+            },
+            { status: 401 }
+          );
+        }
+        
+        return NextResponse.json(
+          { error: 'OpenAI API error', details: errorMessage },
+          { status: 500 }
+        );
+      } catch {
+        return NextResponse.json(
+          { error: 'Failed to get recommendations', details: errorText },
+          { status: 500 }
+        );
+      }
     }
 
     const data = await response.json();
