@@ -65,7 +65,37 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
   const { isAuthenticated } = useAuth();
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [currentRating, setCurrentRating] = useState(book.rating);
+  const [isUpdatingRating, setIsUpdatingRating] = useState(false);
   const mediaTypesArray = parseMediaTypes(book.mediaTypes);
+
+  const handleRatingChange = async (e: React.MouseEvent, newRating: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isAuthenticated || isUpdatingRating) return;
+    
+    setIsUpdatingRating(true);
+    const previousRating = currentRating;
+    setCurrentRating(newRating);
+    
+    try {
+      const response = await fetch(`/api/books/${book.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: newRating }),
+      });
+
+      if (!response.ok) {
+        setCurrentRating(previousRating);
+      }
+    } catch (error) {
+      console.error('Failed to update rating:', error);
+      setCurrentRating(previousRating);
+    } finally {
+      setIsUpdatingRating(false);
+    }
+  };
 
   const handleBadgeClick = (e: React.MouseEvent, filter: string) => {
     e.preventDefault();
@@ -172,7 +202,16 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
               </div>
 
               <div className="flex items-center gap-3 flex-shrink-0">
-                {book.rating && <RatingStars rating={book.rating} readonly size="sm" />}
+                {book.status === 'FINISHED' && (
+                  <div onClick={(e) => e.preventDefault()}>
+                    <RatingStars 
+                      rating={currentRating} 
+                      readonly={!isAuthenticated}
+                      onRatingChange={isAuthenticated ? (rating) => handleRatingChange({ preventDefault: () => {}, stopPropagation: () => {} } as React.MouseEvent, rating) : undefined}
+                      size="sm" 
+                    />
+                  </div>
+                )}
                 <div className="flex items-center gap-1">
                   {mediaTypesArray.map((mt) => {
                     const Icon = mediaTypeIcons[mt];
@@ -254,11 +293,15 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
                 })}
               </div>
 
-              {book.rating && (
-                <div className="absolute bottom-3 right-3 z-10">
-                  <div className="bg-black/50 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1">
-                    <span className="text-yellow-400 text-sm">★</span>
-                    <span className="text-white text-sm font-medium">{book.rating}</span>
+              {book.status === 'FINISHED' && (
+                <div className="absolute bottom-3 right-3 z-10" onClick={(e) => e.preventDefault()}>
+                  <div className="bg-black/60 backdrop-blur-sm px-2 py-1.5 rounded-lg">
+                    <RatingStars 
+                      rating={currentRating} 
+                      readonly={!isAuthenticated}
+                      onRatingChange={isAuthenticated ? (rating) => handleRatingChange({ preventDefault: () => {}, stopPropagation: () => {} } as React.MouseEvent, rating) : undefined}
+                      size="sm" 
+                    />
                   </div>
                 </div>
               )}
