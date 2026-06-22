@@ -1,5 +1,5 @@
-import { searchOpenLibrary, getBookByISBN, BookInfo, enrichFromOpenLibrary } from './open-library';
-import { searchGoogleBooks, enrichFromGoogleBooks, searchGoogleBooksByISBN } from './google-books';
+import { searchOpenLibrary, getBookByISBN, BookInfo } from './open-library';
+import { searchGoogleBooks, searchGoogleBooksByISBN } from './google-books';
 
 /**
  * Search for books using multiple APIs in parallel
@@ -33,7 +33,9 @@ export async function searchBooks(query: string): Promise<BookInfo[]> {
  *
  * Strategy:
  * - Union, not intersection: keep every book either source returned.
- * - De-dupe by ISBN, falling back to normalized title + author.
+ * - Drop box sets, collections and study guides that aren't real editions.
+ * - Collapse editions: de-dupe by canonical title + author so the many ISBNs
+ *   of one book (hardcover, paperback, reissue, etc.) become a single entry.
  * - When the same book comes from both sources, prefer the Open Library cover
  *   (higher quality, no watermark) and the Google summary (better coverage).
  */
@@ -45,7 +47,7 @@ function mergeBookResults(
   const merged = new Map<string, BookInfo>();
 
   for (const book of [...openLibrary, ...google]) {
-    if (!book.title) continue;
+    if (!book.title || isNoiseResult(book)) continue;
     const key = bookKey(book);
     const existing = merged.get(key);
     merged.set(key, existing ? combineBooks(existing, book) : { ...book });
@@ -83,15 +85,38 @@ function bestAuthor(a?: string, b?: string): string {
 }
 
 /**
- * Stable de-dupe key: prefer ISBN, fall back to normalized title + author so
- * the same book from two sources collapses into one entry.
+ * De-dupe key based on the canonical title + author. Editions of one book share
+ * a title and author but carry different ISBNs, so keying on ISBN would scatter
+ * them across many rows; keying on canonical title + author collapses them.
  */
 function bookKey(book: BookInfo): string {
-  const isbn = book.isbn?.replace(/[-\s]/g, '');
-  if (isbn && isbn.length >= 10) {
-    return `isbn:${isbn}`;
-  }
-  return `title:${normalizeTitle(book.title)}|author:${normalizeTitle(book.author || '')}`;
+  return `${canonicalTitle(book.title)}|${normalizeTitle(book.author || '')}`;
+}
+
+/**
+ * Box sets, omnibus collections, and study guides/summaries pollute results
+ * with rows that aren't the book the user is looking for. Drop them.
+ */
+const NOISE_TITLE = /\b(box(ed)?\s*sets?|boxsets?|\d+\s*books?\s*(set|collection)|books?\s*(set|collection)|collections?\s*set|omnibus|complete\s+(series|collection)|study\s+guide|summary\s+of)\b/i;
+const NOISE_AUTHOR = /\b(supersummary|sparknotes|bookrags|cliffsnotes)\b/i;
+
+function isNoiseResult(book: BookInfo): boolean {
+  return NOISE_TITLE.test(book.title) || NOISE_AUTHOR.test(book.author || '');
+}
+
+/**
+ * Canonical form of a title for de-duping editions: drop parenthetical/bracketed
+ * series notes (e.g. "(The Empyrean, 1)") and any subtitle after a colon, then
+ * normalize. "Fourth Wing (The Empyrean, 1)" and "Fourth Wing: Special Edition"
+ * both collapse to "fourth wing".
+ */
+function canonicalTitle(title: string): string {
+  return normalizeTitle(
+    title
+      .replace(/\([^)]*\)/g, ' ')
+      .replace(/\[[^\]]*\]/g, ' ')
+      .split(':')[0]
+  );
 }
 
 /**
@@ -172,41 +197,29 @@ export async function searchBookByISBN(isbn: string): Promise<BookInfo | null> {
 }
 
 /**
- * Combine author and title into a single search query
- * Useful for more precise searches
- */
-export async function searchBookByAuthorAndTitle(
-  author: string,
-  title: string
-): Promise<BookInfo[]> {
-  const query = `${title} ${author}`.trim();
-  return searchBooks(query);
-}
-
-/**
- * Enrich a book with cover and summary from external APIs
- * Tries multiple sources for best results
+ * Enrich a book with cover, summary and ISBN from external APIs.
+ *
+ * Reuses the same multi-source search + merge + ranking pipeline as the
+ * search box, so the top hit reflects the same relevance logic instead of
+ * duplicating a parallel "enrich from each source" path.
  */
 export async function enrichBook(
   title: string,
   author?: string
 ): Promise<{ summary?: string; coverImageUrl?: string; isbn?: string; apiSource?: string } | null> {
-  // Try both sources in parallel
-  const [openLibraryData, googleData] = await Promise.all([
-    enrichFromOpenLibrary(title, author),
-    enrichFromGoogleBooks(title, author),
-  ]);
+  const query = [title, author].filter(Boolean).join(' ').trim();
+  const results = await searchBooks(query);
+  const best = results[0];
 
-  // If neither found anything, return null
-  if (!openLibraryData && !googleData) {
+  if (!best || (!best.summary && !best.coverImageUrl)) {
     return null;
   }
 
-  // Merge results - prefer Open Library covers, Google descriptions
   return {
-    summary: googleData?.summary || openLibraryData?.summary,
-    coverImageUrl: openLibraryData?.coverImageUrl || googleData?.coverImageUrl,
-    apiSource: 'combined',
+    summary: best.summary,
+    coverImageUrl: best.coverImageUrl,
+    isbn: best.isbn,
+    apiSource: best.apiSource,
   };
 }
 

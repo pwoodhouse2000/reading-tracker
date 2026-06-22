@@ -146,30 +146,3 @@ export async function getBookByISBN(isbn: string): Promise<BookInfo | null> {
     return null;
   }
 }
-
-/**
- * Search specifically for a book to get enrichment data
- * Tries harder to get description and cover
- */
-export async function enrichFromOpenLibrary(
-  title: string,
-  author?: string
-): Promise<{ summary?: string; coverImageUrl?: string } | null> {
-  try {
-    const query = author ? `${title} ${author}` : title;
-    const results = await searchOpenLibrary(query);
-
-    if (results.length === 0) {
-      return null;
-    }
-
-    const best = results[0];
-    return {
-      summary: best.summary,
-      coverImageUrl: best.coverImageUrl,
-    };
-  } catch (error) {
-    console.error('Error enriching from Open Library:', error);
-    return null;
-  }
-}

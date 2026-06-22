@@ -199,13 +199,13 @@ export function BookForm({ book, mode }: BookFormProps) {
   };
 
   // Common input class for consistent styling
-  const inputClass = "w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all bg-white text-gray-900";
-  const textareaClass = "w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all resize-none bg-white text-gray-900";
-  const selectClass = "w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-primary focus:ring-0 transition-all bg-white text-gray-900";
+  const inputClass = "w-full px-4 py-3 border-2 border-input rounded-xl focus:border-primary focus:ring-0 transition-all bg-background text-foreground placeholder-muted-foreground";
+  const textareaClass = "w-full px-4 py-3 border-2 border-input rounded-xl focus:border-primary focus:ring-0 transition-all resize-none bg-background text-foreground placeholder-muted-foreground";
+  const selectClass = "w-full px-4 py-3 border-2 border-input rounded-xl focus:border-primary focus:ring-0 transition-all bg-background text-foreground";
 
   return (
-    <Card className="border-0 shadow-xl bg-white/90 backdrop-blur">
-      <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-primary/5 to-accent/5">
+    <Card className="border-0 shadow-xl bg-card/90 backdrop-blur">
+      <CardHeader className="border-b border-border bg-gradient-to-r from-primary/5 to-accent/5">
         <CardTitle className="text-2xl">
           {mode === 'create' ? 'Add New Book' : 'Edit Book'}
         </CardTitle>
@@ -218,10 +218,10 @@ export function BookForm({ book, mode }: BookFormProps) {
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Search Section */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 border border-blue-100 dark:border-blue-900 rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-5 w-5 text-blue-600" />
-              <label className="text-sm font-semibold text-blue-900">
+              <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <label className="text-sm font-semibold text-blue-900 dark:text-blue-100">
                 {mode === 'create' ? 'Search for a book' : 'Find different edition or cover'}
               </label>
             </div>
@@ -233,13 +233,13 @@ export function BookForm({ book, mode }: BookFormProps) {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by title, author, or ISBN..."
-                  className="w-full pl-12 pr-12 py-3 border-2 border-transparent bg-white rounded-xl shadow-sm focus:border-blue-300 focus:ring-0 transition-all text-gray-900 placeholder-gray-400"
+                  className="w-full pl-12 pr-12 py-3 border-2 border-transparent bg-background rounded-xl shadow-sm focus:border-blue-300 focus:ring-0 transition-all text-foreground placeholder-muted-foreground"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={clearSearch}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-muted-foreground transition-colors"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -252,7 +252,7 @@ export function BookForm({ book, mode }: BookFormProps) {
                   onClick={handleRefreshMetadata}
                   disabled={searching}
                   variant="outline"
-                  className="mt-3 w-full rounded-xl border-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50"
+                  className="mt-3 w-full rounded-xl border-2 border-blue-200 dark:border-blue-800 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/40"
                   size="sm"
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${searching ? 'animate-spin' : ''}`} />
@@ -262,24 +262,24 @@ export function BookForm({ book, mode }: BookFormProps) {
 
               {/* Search Results Dropdown */}
               {showResults && (
-                <div className="absolute z-20 w-full mt-2 bg-white border-2 border-gray-100 rounded-xl shadow-2xl max-h-96 overflow-y-auto">
+                <div className="absolute z-20 w-full mt-2 bg-card border-2 border-border rounded-xl shadow-2xl max-h-96 overflow-y-auto">
                   {searching ? (
-                    <div className="p-6 text-center text-gray-500">
+                    <div className="p-6 text-center text-muted-foreground">
                       <RefreshCw className="h-5 w-5 animate-spin mx-auto mb-2" />
                       Searching...
                     </div>
                   ) : searchResults.length === 0 ? (
-                    <div className="p-6 text-center text-gray-500">
+                    <div className="p-6 text-center text-muted-foreground">
                       No books found. Try a different search term.
                     </div>
                   ) : (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-border">
                       {searchResults.map((result, index) => (
                         <button
                           key={index}
                           type="button"
                           onClick={() => handleSelectBook(result)}
-                          className="w-full p-4 text-left hover:bg-gray-50 transition-colors flex gap-4"
+                          className="w-full p-4 text-left hover:bg-muted transition-colors flex gap-4"
                         >
                           {result.coverImageUrl ? (
                             <img
@@ -288,19 +288,19 @@ export function BookForm({ book, mode }: BookFormProps) {
                               className="w-14 h-20 object-cover rounded-lg shadow-md flex-shrink-0"
                             />
                           ) : (
-                            <div className="w-14 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <span className="text-gray-500 text-xs">No cover</span>
+                            <div className="w-14 h-20 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <span className="text-muted-foreground text-xs">No cover</span>
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm text-gray-900 line-clamp-2">
+                            <div className="font-semibold text-sm text-foreground line-clamp-2">
                               {result.title}
                             </div>
-                            <div className="text-sm text-gray-600 mt-0.5">
+                            <div className="text-sm text-muted-foreground mt-0.5">
                               by {result.author}
                             </div>
                             {result.summary && (
-                              <div className="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">
+                              <div className="text-xs text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
                                 {result.summary}
                               </div>
                             )}
@@ -312,7 +312,7 @@ export function BookForm({ book, mode }: BookFormProps) {
                 </div>
               )}
             </div>
-            <p className="text-xs text-blue-700/70 mt-3">
+            <p className="text-xs text-blue-700/70 dark:text-blue-300/70 mt-3">
               {mode === 'create'
                 ? 'Search to auto-fill book details, or enter manually below'
                 : 'Find and select a different edition or cover image'}
@@ -331,7 +331,7 @@ export function BookForm({ book, mode }: BookFormProps) {
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-2 text-gray-600">
+                <label className="block text-sm font-medium mb-2 text-muted-foreground">
                   Cover Image URL
                 </label>
                 <input
@@ -349,7 +349,7 @@ export function BookForm({ book, mode }: BookFormProps) {
           {/* Title and Author */}
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2 text-foreground">
                 Title <span className="text-red-500">*</span>
               </label>
               <input
@@ -364,7 +364,7 @@ export function BookForm({ book, mode }: BookFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2 text-foreground">
                 Author <span className="text-red-500">*</span>
               </label>
               <input
@@ -381,7 +381,7 @@ export function BookForm({ book, mode }: BookFormProps) {
 
           {/* Rating */}
           <div>
-            <label className="block text-sm font-semibold mb-3 text-gray-700">
+            <label className="block text-sm font-semibold mb-3 text-foreground">
               Rating
             </label>
             <div className="flex items-center gap-2">
@@ -405,7 +405,7 @@ export function BookForm({ book, mode }: BookFormProps) {
                 <button
                   type="button"
                   onClick={() => setRating(null)}
-                  className="ml-3 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  className="ml-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Clear
                 </button>
@@ -415,8 +415,8 @@ export function BookForm({ book, mode }: BookFormProps) {
 
           {/* Media Types (Multiple Selection) */}
           <div>
-            <label className="block text-sm font-semibold mb-3 text-gray-700">
-              Media Type(s) <span className="text-xs font-normal text-gray-500">(select all that apply)</span>
+            <label className="block text-sm font-semibold mb-3 text-foreground">
+              Media Type(s) <span className="text-xs font-normal text-muted-foreground">(select all that apply)</span>
             </label>
             <div className="flex flex-wrap gap-4">
               {MEDIA_TYPES.map((mediaType) => (
@@ -448,7 +448,7 @@ export function BookForm({ book, mode }: BookFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2 text-foreground">
                 Status
               </label>
               <select
@@ -466,7 +466,7 @@ export function BookForm({ book, mode }: BookFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2 text-foreground">
                 Category
               </label>
               <select
@@ -481,7 +481,7 @@ export function BookForm({ book, mode }: BookFormProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2 text-foreground">
                 Priority
               </label>
               <input
@@ -498,7 +498,7 @@ export function BookForm({ book, mode }: BookFormProps) {
 
           {/* Sub-category with emoji picker */}
           <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700">
+            <label className="block text-sm font-semibold mb-2 text-foreground">
               Sub-category
             </label>
             <select
@@ -535,7 +535,7 @@ export function BookForm({ book, mode }: BookFormProps) {
           {/* Date Started and Date Finished */}
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2 text-foreground">
                 Date Started
               </label>
               <input
@@ -545,13 +545,13 @@ export function BookForm({ book, mode }: BookFormProps) {
                 onChange={handleChange}
                 className={inputClass}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Auto-set when status changes to &quot;Reading&quot;
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">
+              <label className="block text-sm font-semibold mb-2 text-foreground">
                 Date Finished
               </label>
               <input
@@ -561,14 +561,14 @@ export function BookForm({ book, mode }: BookFormProps) {
                 onChange={handleChange}
                 className={inputClass}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Auto-set when status changes to &quot;Finished&quot;
               </p>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700">
+            <label className="block text-sm font-semibold mb-2 text-foreground">
               Summary
             </label>
             <textarea
@@ -582,7 +582,7 @@ export function BookForm({ book, mode }: BookFormProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700">
+            <label className="block text-sm font-semibold mb-2 text-foreground">
               My Thoughts
             </label>
             <textarea

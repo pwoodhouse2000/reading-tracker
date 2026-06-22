@@ -121,30 +121,3 @@ export async function searchGoogleBooksByISBN(
     return null;
   }
 }
-
-/**
- * Enrich a book with data from Google Books
- * Good for getting descriptions (Google has better coverage than Open Library)
- */
-export async function enrichFromGoogleBooks(
-  title: string,
-  author?: string
-): Promise<{ summary?: string; coverImageUrl?: string } | null> {
-  try {
-    const query = author ? `${title} ${author}` : title;
-    const results = await searchGoogleBooks(query, process.env.GOOGLE_BOOKS_API_KEY);
-
-    if (results.length === 0) {
-      return null;
-    }
-
-    const best = results[0];
-    return {
-      summary: best.summary,
-      coverImageUrl: best.coverImageUrl,
-    };
-  } catch (error) {
-    console.error('Error enriching from Google Books:', error);
-    return null;
-  }
-}
