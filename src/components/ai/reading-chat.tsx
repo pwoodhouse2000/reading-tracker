@@ -99,7 +99,7 @@ export function ReadingChat() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-full shadow-2xl hover:shadow-violet-500/25 hover:scale-105 transition-all group"
+        className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-50 p-4 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-full shadow-2xl hover:shadow-violet-500/25 hover:scale-105 transition-all group"
       >
         <MessageCircle className="h-6 w-6" />
         <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
@@ -110,7 +110,7 @@ export function ReadingChat() {
 
   // Chat panel when open
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-3rem)] animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-50 w-96 max-w-[calc(100vw-2rem)] animate-in slide-in-from-bottom-4 duration-300">
       <Card className="border-0 shadow-2xl overflow-hidden">
         {/* Header */}
         <CardHeader className="bg-gradient-to-r from-violet-500 to-purple-600 text-white p-4">

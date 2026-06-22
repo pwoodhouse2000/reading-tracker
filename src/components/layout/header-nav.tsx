@@ -30,6 +30,8 @@ export function HeaderNav() {
 
   return (
     <nav className="flex items-center gap-1">
+      {/* Primary links — hidden on mobile, where the bottom tab bar takes over */}
+      <div className="hidden md:flex items-center gap-1">
       {publicNavItems.map((item) => {
         const Icon = item.icon;
         const isActive = pathname === item.href || 
@@ -72,8 +74,10 @@ export function HeaderNav() {
         );
       })}
 
+      </div>
+
       {/* Separator */}
-      <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2 hidden sm:block" />
+      <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-2 hidden md:block" />
 
       {/* Theme toggle */}
       <ThemeToggle />

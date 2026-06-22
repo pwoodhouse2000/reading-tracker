@@ -62,7 +62,7 @@ async function fetchWorkDescription(workKey: string): Promise<string | undefined
 export async function searchOpenLibrary(query: string): Promise<BookInfo[]> {
   try {
     const response = await fetch(
-      `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5`,
+      `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=10`,
       { next: { revalidate: 3600 } } // Cache for 1 hour
     );
 

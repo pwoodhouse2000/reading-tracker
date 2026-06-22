@@ -38,8 +38,14 @@ export async function searchGoogleBooks(
   try {
     const url = new URL('https://www.googleapis.com/books/v1/volumes');
     url.searchParams.set('q', query);
-    url.searchParams.set('maxResults', '5');
-    // Only add key if provided - API works without it
+    url.searchParams.set('maxResults', '10');
+    url.searchParams.set('orderBy', 'relevance');
+    // Google's Volumes API returns empty results for requests from many
+    // datacenter IPs (e.g. Cloud Run) unless an access country is supplied.
+    // Without this, Google Books effectively returns nothing in production -
+    // the main reason new releases couldn't be found.
+    url.searchParams.set('country', process.env.GOOGLE_BOOKS_COUNTRY || 'US');
+    // Only add key if provided - API works without it (just lower rate limits)
     if (apiKey) {
       url.searchParams.set('key', apiKey);
     }

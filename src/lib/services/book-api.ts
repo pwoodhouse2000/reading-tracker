@@ -14,52 +14,119 @@ export async function searchBooks(query: string): Promise<BookInfo[]> {
 
   const trimmedQuery = query.trim();
 
-  // Search both APIs in parallel for speed
+  // Search both APIs in parallel for speed. Each is resilient and returns []
+  // on failure, so a single slow or empty source never blocks the other.
   const [openLibraryResults, googleResults] = await Promise.all([
     searchOpenLibrary(trimmedQuery),
     searchGoogleBooks(trimmedQuery, process.env.GOOGLE_BOOKS_API_KEY),
   ]);
 
-  // If we have results from both, merge the best of each
-  if (openLibraryResults.length > 0 && googleResults.length > 0) {
-    return mergeBookResults(openLibraryResults, googleResults);
-  }
-
-  // Return whichever has results
-  if (openLibraryResults.length > 0) {
-    return openLibraryResults;
-  }
-
-  return googleResults;
+  // Union both sources so a title only one provider knows about (e.g. a new
+  // release, which Open Library indexes slowly) is never dropped. Duplicates
+  // are merged, then the combined list is ranked by relevance to the query.
+  return mergeBookResults(openLibraryResults, googleResults, trimmedQuery);
 }
 
 /**
- * Merge results from Open Library and Google Books
- * Strategy: Use Open Library as base, enrich with Google data
+ * Merge Open Library and Google Books results into a single de-duplicated,
+ * relevance-ranked list.
+ *
+ * Strategy:
+ * - Union, not intersection: keep every book either source returned.
+ * - De-dupe by ISBN, falling back to normalized title + author.
+ * - When the same book comes from both sources, prefer the Open Library cover
+ *   (higher quality, no watermark) and the Google summary (better coverage).
  */
-function mergeBookResults(openLibrary: BookInfo[], google: BookInfo[]): BookInfo[] {
-  return openLibrary.map((olBook, index) => {
-    // Try to find matching Google book by title similarity
-    const googleMatch = google.find((gBook) =>
-      normalizeTitle(gBook.title) === normalizeTitle(olBook.title) ||
-      gBook.title.toLowerCase().includes(olBook.title.toLowerCase()) ||
-      olBook.title.toLowerCase().includes(gBook.title.toLowerCase())
-    ) || google[index]; // Fall back to same index position
+function mergeBookResults(
+  openLibrary: BookInfo[],
+  google: BookInfo[],
+  query: string
+): BookInfo[] {
+  const merged = new Map<string, BookInfo>();
 
-    if (!googleMatch) {
-      return olBook;
+  for (const book of [...openLibrary, ...google]) {
+    if (!book.title) continue;
+    const key = bookKey(book);
+    const existing = merged.get(key);
+    merged.set(key, existing ? combineBooks(existing, book) : { ...book });
+  }
+
+  return rankByRelevance(Array.from(merged.values()), query);
+}
+
+/**
+ * Combine two records for the same book, picking the best field from each
+ * source regardless of which was seen first.
+ */
+function combineBooks(a: BookInfo, b: BookInfo): BookInfo {
+  const ol = a.apiSource === 'open_library' ? a : b;
+  const google = a.apiSource === 'google_books' ? a : b;
+
+  return {
+    title: a.title || b.title,
+    author: bestAuthor(a.author, b.author),
+    // Open Library covers are higher quality; fall back to Google's.
+    coverImageUrl: ol.coverImageUrl || google.coverImageUrl || a.coverImageUrl || b.coverImageUrl,
+    // Google descriptions have far better coverage.
+    summary: google.summary || ol.summary || a.summary || b.summary,
+    isbn: a.isbn || b.isbn,
+    publishYear: a.publishYear || b.publishYear,
+    apiSource: 'combined',
+  };
+}
+
+function bestAuthor(a?: string, b?: string): string {
+  const known = (v?: string) => !!v && v !== 'Unknown Author';
+  if (known(a)) return a as string;
+  if (known(b)) return b as string;
+  return a || b || 'Unknown Author';
+}
+
+/**
+ * Stable de-dupe key: prefer ISBN, fall back to normalized title + author so
+ * the same book from two sources collapses into one entry.
+ */
+function bookKey(book: BookInfo): string {
+  const isbn = book.isbn?.replace(/[-\s]/g, '');
+  if (isbn && isbn.length >= 10) {
+    return `isbn:${isbn}`;
+  }
+  return `title:${normalizeTitle(book.title)}|author:${normalizeTitle(book.author || '')}`;
+}
+
+/**
+ * Rank results by how well they match the user's query so the most relevant
+ * book (often an exact-title new release) surfaces first.
+ */
+function rankByRelevance(books: BookInfo[], query: string): BookInfo[] {
+  const normalizedQuery = normalizeTitle(query);
+  const queryTokens = normalizedQuery.split(' ').filter(Boolean);
+
+  const scoreFor = (book: BookInfo): number => {
+    const normalizedTitle = normalizeTitle(book.title);
+    const haystack = `${normalizedTitle} ${normalizeTitle(book.author || '')}`;
+    const haystackTokens = new Set(haystack.split(' ').filter(Boolean));
+
+    let value = 0;
+    // Exact title match is the strongest signal.
+    if (normalizedTitle === normalizedQuery) value += 100;
+    // Title starts with the query (e.g. searching a partial title).
+    else if (normalizedQuery && normalizedTitle.startsWith(normalizedQuery)) value += 40;
+    // Token overlap with title + author.
+    for (const token of queryTokens) {
+      if (haystackTokens.has(token)) value += 5;
     }
+    // Light tie-breakers favouring complete records.
+    if (book.coverImageUrl) value += 1;
+    if (book.summary) value += 1;
+    return value;
+  };
 
-    // Prefer Open Library covers (higher quality, larger images)
-    // Prefer Google descriptions (better coverage, full summaries)
-    return {
-      ...olBook,
-      summary: olBook.summary || googleMatch.summary,
-      coverImageUrl: olBook.coverImageUrl || googleMatch.coverImageUrl,
-      isbn: olBook.isbn || googleMatch.isbn,
-      apiSource: 'combined',
-    };
-  });
+  return books
+    .map((book, index) => ({ book, index, score: scoreFor(book) }))
+    // Stable sort: higher score first, original order as the tie-breaker.
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((entry) => entry.book);
 }
 
 /**

@@ -5,6 +5,7 @@ import { BookOpen } from 'lucide-react';
 import { AuthProvider } from '@/components/auth/auth-provider';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { HeaderNav } from '@/components/layout/header-nav';
+import { MobileNav } from '@/components/layout/mobile-nav';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { ReadingChat } from '@/components/ai/reading-chat';
 
@@ -27,8 +28,9 @@ export const viewport: Viewport = {
   themeColor: '#8b5cf6',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // Allow pinch-zoom so content is never permanently cut off on small screens.
+  maximumScale: 5,
+  userScalable: true,
 };
 
 export default function RootLayout({
@@ -60,7 +62,7 @@ export default function RootLayout({
             <div className="relative min-h-screen flex flex-col">
               {/* Header */}
               <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
-                <div className="container mx-auto px-6 py-4">
+                <div className="container mx-auto px-4 sm:px-6 py-4">
                   <div className="flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-3 group">
                       <div className="relative">
@@ -82,14 +84,15 @@ export default function RootLayout({
                 </div>
               </header>
 
-              {/* Main content */}
-              <main className="flex-1 container mx-auto px-6 py-8">
+              {/* Main content. Extra bottom padding on mobile clears the
+                  fixed bottom navigation bar. */}
+              <main className="flex-1 container mx-auto px-4 sm:px-6 py-8 pb-24 md:pb-8">
                 {children}
               </main>
 
               {/* Footer */}
               <footer className="border-t border-border bg-card/50 backdrop-blur-sm">
-                <div className="container mx-auto px-6 py-6">
+                <div className="container mx-auto px-4 sm:px-6 py-6">
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <p>© {new Date().getFullYear()} Pete&apos;s Reading Tracker</p>
                     <p className="flex items-center gap-2">
@@ -99,6 +102,9 @@ export default function RootLayout({
                   </div>
                 </div>
               </footer>
+
+              {/* Bottom navigation (mobile only) */}
+              <MobileNav />
 
               {/* PWA Install Prompt */}
               <InstallPrompt />
