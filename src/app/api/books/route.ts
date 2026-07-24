@@ -67,6 +67,8 @@ export async function POST(request: NextRequest) {
         dateStarted,
         dateFinished,
         priority: body.priority,
+        currentPage: body.currentPage,
+        totalPages: body.totalPages,
       },
     });
 

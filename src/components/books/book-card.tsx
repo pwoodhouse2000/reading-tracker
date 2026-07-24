@@ -23,6 +23,8 @@ interface Book {
   rating: number | null;
   coverImageUrl: string | null;
   summary: string | null;
+  currentPage?: number | null;
+  totalPages?: number | null;
 }
 
 interface BookCardProps {
@@ -364,6 +366,28 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
                   {book.summary}
                 </p>
               )}
+
+              {book.status === 'READING' && book.currentPage ? (
+                <div className="pt-2 space-y-1">
+                  {book.totalPages ? (
+                    <>
+                      <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                          style={{
+                            width: `${Math.min(100, Math.round((book.currentPage / book.totalPages) * 100))}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        p. {book.currentPage} of {book.totalPages}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">on page {book.currentPage}</p>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
         </CardContent>

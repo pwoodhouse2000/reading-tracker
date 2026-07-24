@@ -56,7 +56,7 @@ describe('GET /api/books/[id]', () => {
   });
 
   it('returns 500 when Prisma throws', async () => {
-    bookFindUnique.mockRejectedValue(new Error('db down'));
+    bookFindUnique.mockRejectedValueOnce(new Error('db down'));
     const res = await GET(request(), params());
     expect(res.status).toBe(500);
   });

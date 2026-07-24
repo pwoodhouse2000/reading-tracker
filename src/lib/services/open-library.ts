@@ -5,6 +5,7 @@ export interface BookInfo {
   coverImageUrl?: string;
   isbn?: string;
   publishYear?: number;
+  pageCount?: number;
   apiSource?: string;
 }
 
@@ -15,6 +16,7 @@ interface OpenLibraryDoc {
   cover_i?: number;
   isbn?: string[];
   first_publish_year?: number;
+  number_of_pages_median?: number;
   key?: string; // e.g., "/works/OL123W"
 }
 
@@ -86,6 +88,7 @@ export async function searchOpenLibrary(query: string): Promise<BookInfo[]> {
         : undefined,
       isbn: doc.isbn?.[0],
       publishYear: doc.first_publish_year,
+      pageCount: doc.number_of_pages_median,
       workKey: doc.key,
       apiSource: 'open_library',
     }));
@@ -139,6 +142,7 @@ export async function getBookByISBN(isbn: string): Promise<BookInfo | null> {
       coverImageUrl: coverUrl,
       isbn: isbn,
       publishYear: data.publish_date ? parseInt(data.publish_date) : undefined,
+      pageCount: typeof data.number_of_pages === 'number' ? data.number_of_pages : undefined,
       apiSource: 'open_library',
     };
   } catch (error) {

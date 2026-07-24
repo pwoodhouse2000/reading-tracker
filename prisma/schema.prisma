@@ -26,6 +26,10 @@ model Book {
   isbn              String?     // For API lookups
   apiSource         String?     // 'open_library' | 'google_books'
 
+  // Page progress tracking
+  currentPage       Int?        // Current page when reading
+  totalPages        Int?        // Total page count if known
+
   // User content
   notes             Note[]
   thoughts          String?     // User's overall thoughts

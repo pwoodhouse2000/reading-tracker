@@ -9,7 +9,8 @@ import { RatingStars } from '@/components/books/rating-stars';
 import { Badge } from '@/components/ui/badge';
 import { BookEditButton, AddDetailsButton } from '@/components/books/admin-actions';
 import { NoteList } from '@/components/notes/note-list';
-import { ArrowLeft, BookOpen, Headphones, Tablet, Calendar, Clock, Sparkles, Quote } from 'lucide-react';
+import { ArrowLeft, BookOpen, Headphones, Tablet, Calendar, Clock, Sparkles, Quote, BookMarked } from 'lucide-react';
+import { PageProgress } from '@/components/books/page-progress';
 import { parseMediaTypes } from '@/lib/constants';
 
 interface BookDetailPageProps {
@@ -89,6 +90,23 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
               </div>
             )}
           </div>
+
+          {/* Page Progress Card */}
+          {book.status === 'READING' && (
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-5">
+                <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                  <BookMarked className="h-4 w-4 text-primary" />
+                  Reading Progress
+                </h3>
+                <PageProgress
+                  bookId={book.id}
+                  currentPage={book.currentPage}
+                  totalPages={book.totalPages}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Quick Info Card */}
           <Card className="border-0 shadow-lg">
@@ -237,7 +255,7 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
           )}
 
           {/* Notes & Quotes */}
-          <Card className="border-0 shadow-lg dark:bg-gray-800">
+          <Card id="notes" className="border-0 shadow-lg dark:bg-gray-800 scroll-mt-20">
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Quote className="h-5 w-5 text-primary" />
