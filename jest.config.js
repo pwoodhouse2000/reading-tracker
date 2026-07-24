@@ -18,6 +18,7 @@ const customJestConfig = {
     '!src/**/*.d.ts',
     '!src/**/layout.tsx',
   ],
+  testMatch: ['<rootDir>/__tests__/**/*.test.ts', '<rootDir>/__tests__/**/*.test.tsx'],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

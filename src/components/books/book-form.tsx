@@ -35,12 +35,20 @@ interface BookFormProps {
     dateFinished: Date | null;
   };
   mode: 'create' | 'edit';
+  // Optional prefill for create mode (e.g. from the PWA share target:
+  // /books/new?title=...&text=...&url=...)
+  prefill?: {
+    title?: string;
+    author?: string;
+    summary?: string;
+    isbn?: string;
+  };
 }
 
-export function BookForm({ book, mode }: BookFormProps) {
+export function BookForm({ book, mode, prefill }: BookFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(prefill?.title || '');
   const [searchResults, setSearchResults] = useState<BookInfo[]>([]);
   const [searching, setSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -54,15 +62,15 @@ export function BookForm({ book, mode }: BookFormProps) {
   
   const [customSubCategory, setCustomSubCategory] = useState(isCustomSubCat ? book?.subCategory || '' : '');
   const [formData, setFormData] = useState({
-    title: book?.title || '',
-    author: book?.author || '',
+    title: book?.title || prefill?.title || '',
+    author: book?.author || prefill?.author || '',
     status: book?.status || 'TO_READ',
     category: book?.category || 'NON_FICTION',
     subCategory: isCustomSubCat ? 'Other' : (book?.subCategory || ''),
-    summary: book?.summary || '',
+    summary: book?.summary || prefill?.summary || '',
     thoughts: book?.thoughts || '',
     coverImageUrl: book?.coverImageUrl || '',
-    isbn: book?.isbn || '',
+    isbn: book?.isbn || prefill?.isbn || '',
     rating: book?.rating || null,
     priority: book?.priority || null,
     dateStarted: book?.dateStarted ? new Date(book.dateStarted).toISOString().split('T')[0] : '',
