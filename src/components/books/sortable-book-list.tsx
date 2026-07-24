@@ -6,6 +6,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -96,6 +97,14 @@ export function SortableBookList({ books, compact = false, onReorder }: Sortable
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    // Touch: require a 200ms press-and-hold before dragging starts,
+    // so scrolling the list doesn't accidentally trigger drags on mobile.
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
