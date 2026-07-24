@@ -237,7 +237,7 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
           )}
 
           {/* Notes & Quotes */}
-          <Card className="border-0 shadow-lg dark:bg-gray-800">
+          <Card id="notes" className="border-0 shadow-lg dark:bg-gray-800 scroll-mt-20">
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Quote className="h-5 w-5 text-primary" />

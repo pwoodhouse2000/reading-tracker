@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { BookCard } from './book-card';
+import { SwipeableBookCard } from './swipeable-book-card';
 import { SortableBookList } from './sortable-book-list';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -372,7 +373,11 @@ export function BookList({
                       : 'space-y-3'
                   }>
                     {statusBooks.map((book) => (
-                      <BookCard key={book.id} book={book} compact={viewMode === 'compact'} />
+                      viewMode === 'compact' ? (
+                        <SwipeableBookCard key={book.id} book={book} />
+                      ) : (
+                        <BookCard key={book.id} book={book} compact={false} />
+                      )
                     ))}
                   </div>
                 </div>
@@ -387,7 +392,11 @@ export function BookList({
             : 'space-y-3'
         }>
           {(sortedAndGroupedBooks.books || []).map((book: Book) => (
-            <BookCard key={book.id} book={book} compact={viewMode === 'compact'} />
+            viewMode === 'compact' ? (
+              <SwipeableBookCard key={book.id} book={book} />
+            ) : (
+              <BookCard key={book.id} book={book} compact={false} />
+            )
           ))}
         </div>
       )}

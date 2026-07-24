@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -12,7 +12,8 @@ import {
   Check, 
   X, 
   Plus,
-  BookOpen
+  BookOpen,
+  Camera
 } from 'lucide-react';
 
 interface Note {
@@ -54,6 +55,70 @@ export function NoteList({
   const [editContent, setEditContent] = useState('');
   const [editPage, setEditPage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrError, setOcrError] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Downscale a photo client-side (max 1600px on the long edge, JPEG ~0.8)
+  const downscaleImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX_EDGE = 1600;
+          const scale = Math.min(1, MAX_EDGE / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas not supported'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
+        };
+        img.onerror = () => reject(new Error('Could not read image'));
+        img.src = reader.result as string;
+      };
+      reader.onerror = () => reject(new Error('Could not read file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setOcrLoading(true);
+    setOcrError(null);
+    try {
+      const dataUri = await downscaleImage(file);
+      const response = await fetch('/api/notes/ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUri, bookId }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setOcrError(data.error || 'Could not extract text from the photo');
+        return;
+      }
+
+      // Drop the extracted text into the note form for review before saving
+      setNewContent(data.text);
+      setIsQuote(true);
+      setShowAddForm(true);
+    } catch (error) {
+      console.error('Failed to OCR photo:', error);
+      setOcrError('Something went wrong reading the photo. Please try again.');
+    } finally {
+      setOcrLoading(false);
+    }
+  };
 
   const handleAddNote = async () => {
     if (!newContent.trim()) return;
@@ -225,14 +290,45 @@ export function NoteList({
               </CardContent>
             </Card>
           ) : (
-            <Button
-              variant="outline"
-              onClick={() => setShowAddForm(true)}
-              className="w-full border-dashed border-2 hover:border-primary hover:bg-primary/5"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Note or Quote
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowAddForm(true)}
+                className="flex-1 border-dashed border-2 hover:border-primary hover:bg-primary/5"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Note or Quote
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={ocrLoading}
+                className="border-dashed border-2 hover:border-primary hover:bg-primary/5"
+                aria-label="Scan quote from photo"
+                title="Scan quote from photo"
+              >
+                {ocrLoading ? (
+                  <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                ) : (
+                  <Camera className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          )}
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handlePhotoSelect}
+            className="hidden"
+            data-testid="ocr-photo-input"
+          />
+          {ocrLoading && (
+            <p className="text-sm text-muted-foreground mt-2">Reading text from photo…</p>
+          )}
+          {ocrError && (
+            <p className="text-sm text-red-600 dark:text-red-400 mt-2">{ocrError}</p>
           )}
         </div>
       )}
