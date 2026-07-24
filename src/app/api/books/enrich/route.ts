@@ -44,13 +44,17 @@ export async function POST(request: NextRequest) {
 
         if (enrichmentData && (enrichmentData.summary || enrichmentData.coverImageUrl)) {
           // Only update fields that are currently missing
-          const updateData: Record<string, string> = {};
-          
+          const updateData: Record<string, string | number> = {};
+
           if (!book.coverImageUrl && enrichmentData.coverImageUrl) {
             updateData.coverImageUrl = enrichmentData.coverImageUrl;
           }
           if (!book.summary && enrichmentData.summary) {
             updateData.summary = enrichmentData.summary;
+          }
+          // Prefill total page count when the API knows it and we don't
+          if (!book.totalPages && enrichmentData.totalPages) {
+            updateData.totalPages = enrichmentData.totalPages;
           }
           if (enrichmentData.apiSource) {
             updateData.apiSource = enrichmentData.apiSource;

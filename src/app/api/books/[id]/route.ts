@@ -68,6 +68,23 @@ export async function PATCH(
       body.dateFinished = null;
     }
 
+    // Page progress auto-behaviors based on status changes
+    if (body.status === 'FINISHED') {
+      // Mark the book as fully read when we know the total page count
+      let totalPages = body.totalPages;
+      if (totalPages === undefined) {
+        const existing = await prisma.book.findUnique({ where: { id } });
+        totalPages = existing?.totalPages;
+      }
+      if (totalPages) {
+        body.currentPage = totalPages;
+      }
+    }
+    if (body.status === 'TO_READ') {
+      // Reset progress when the book goes back on the shelf
+      body.currentPage = null;
+    }
+
     const book = await prisma.book.update({
       where: { id },
       data: body,

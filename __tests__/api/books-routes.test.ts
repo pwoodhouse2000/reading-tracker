@@ -8,6 +8,7 @@ jest.mock('@/lib/prisma', () => ({
     book: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
+      create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
       $transaction: jest.fn(),
@@ -37,6 +38,7 @@ import {
   PATCH as bookIdPATCH,
   DELETE as bookIdDELETE,
 } from '@/app/api/books/[id]/route';
+import { POST as booksPOST } from '@/app/api/books/route';
 import { POST as reorderPOST } from '@/app/api/books/reorder/route';
 import { GET as searchGET } from '@/app/api/books/search/route';
 import { POST as enrichPOST } from '@/app/api/books/enrich/route';
@@ -44,6 +46,7 @@ import { POST as enrichPOST } from '@/app/api/books/enrich/route';
 const mockBook = prisma.book as unknown as {
   findUnique: jest.Mock;
   findMany: jest.Mock;
+  create: jest.Mock;
   update: jest.Mock;
   delete: jest.Mock;
 };
@@ -124,6 +127,59 @@ describe('PATCH /api/books/[id]', () => {
     expect(updateData.dateFinished).toBeInstanceOf(Date);
   });
 
+  it('sets currentPage to totalPages when status changes to FINISHED and totalPages provided', async () => {
+    mockBook.update.mockResolvedValue({ id: 'b1', status: 'FINISHED', notes: [] });
+    const req = makeReq('http://localhost/api/books/book-1', { status: 'FINISHED', totalPages: 320 }, 'PATCH');
+    await bookIdPATCH(req, ctx);
+    const updateData = mockBook.update.mock.calls[0][0].data;
+    expect(updateData.currentPage).toBe(320);
+  });
+
+  it('sets currentPage from existing totalPages when status changes to FINISHED', async () => {
+    mockBook.findUnique.mockResolvedValue({ id: 'book-1', totalPages: 417 });
+    mockBook.update.mockResolvedValue({ id: 'b1', status: 'FINISHED', notes: [] });
+    const req = makeReq('http://localhost/api/books/book-1', { status: 'FINISHED' }, 'PATCH');
+    await bookIdPATCH(req, ctx);
+    const updateData = mockBook.update.mock.calls[0][0].data;
+    expect(updateData.currentPage).toBe(417);
+  });
+
+  it('does not set currentPage on FINISHED when totalPages is unknown', async () => {
+    mockBook.findUnique.mockResolvedValue({ id: 'book-1', totalPages: null });
+    mockBook.update.mockResolvedValue({ id: 'b1', status: 'FINISHED', notes: [] });
+    const req = makeReq('http://localhost/api/books/book-1', { status: 'FINISHED' }, 'PATCH');
+    await bookIdPATCH(req, ctx);
+    const updateData = mockBook.update.mock.calls[0][0].data;
+    expect(updateData.currentPage).toBeUndefined();
+  });
+
+  it('clears currentPage when status changes back to TO_READ', async () => {
+    mockBook.update.mockResolvedValue({ id: 'b1', status: 'TO_READ', notes: [] });
+    const req = makeReq('http://localhost/api/books/book-1', { status: 'TO_READ' }, 'PATCH');
+    await bookIdPATCH(req, ctx);
+    const updateData = mockBook.update.mock.calls[0][0].data;
+    expect(updateData.currentPage).toBeNull();
+  });
+
+  it('persists currentPage and totalPages updates', async () => {
+    mockBook.update.mockResolvedValue({ id: 'b1', currentPage: 147, totalPages: 320, notes: [] });
+    const req = makeReq('http://localhost/api/books/book-1', { currentPage: 147, totalPages: 320 }, 'PATCH');
+    const res = await bookIdPATCH(req, ctx);
+    expect(res.status).toBe(200);
+    const updateData = mockBook.update.mock.calls[0][0].data;
+    expect(updateData.currentPage).toBe(147);
+    expect(updateData.totalPages).toBe(320);
+  });
+
+  it('allows clearing currentPage with null', async () => {
+    mockBook.update.mockResolvedValue({ id: 'b1', currentPage: null, notes: [] });
+    const req = makeReq('http://localhost/api/books/book-1', { currentPage: null }, 'PATCH');
+    const res = await bookIdPATCH(req, ctx);
+    expect(res.status).toBe(200);
+    const updateData = mockBook.update.mock.calls[0][0].data;
+    expect(updateData.currentPage).toBeNull();
+  });
+
   it('converts dateStarted string to Date object', async () => {
     mockBook.update.mockResolvedValue({ id: 'b1', notes: [] });
     const req = makeReq('http://localhost/api/books/book-1', { dateStarted: '2024-01-15' }, 'PATCH');
@@ -154,6 +210,54 @@ describe('PATCH /api/books/[id]', () => {
     mockBook.update.mockRejectedValueOnce(new Error('db'));
     const req = makeReq('http://localhost/api/books/book-1', { title: 'x' }, 'PATCH');
     const res = await bookIdPATCH(req, ctx);
+    expect(res.status).toBe(500);
+  });
+});
+
+// =============================================================================
+describe('POST /api/books', () => {
+  it('creates a book with page progress fields', async () => {
+    const created = { id: 'book-1', title: 'Dune', currentPage: 10, totalPages: 320 };
+    mockBook.create.mockResolvedValue(created);
+    const req = makeReq('http://localhost/api/books', {
+      title: 'Dune',
+      author: 'Frank Herbert',
+      currentPage: 10,
+      totalPages: 320,
+    }, 'POST');
+    const res = await booksPOST(req);
+    expect(res.status).toBe(201);
+    const createData = mockBook.create.mock.calls[0][0].data;
+    expect(createData.currentPage).toBe(10);
+    expect(createData.totalPages).toBe(320);
+  });
+
+  it('defaults page progress fields to undefined when not provided', async () => {
+    mockBook.create.mockResolvedValue({ id: 'book-1', title: 'Dune' });
+    const req = makeReq('http://localhost/api/books', {
+      title: 'Dune',
+      author: 'Frank Herbert',
+    }, 'POST');
+    const res = await booksPOST(req);
+    expect(res.status).toBe(201);
+    const createData = mockBook.create.mock.calls[0][0].data;
+    expect(createData.currentPage).toBeUndefined();
+    expect(createData.totalPages).toBeUndefined();
+  });
+
+  it('returns 401 when not authenticated', async () => {
+    mockRequireAuth.mockResolvedValueOnce(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    );
+    const req = makeReq('http://localhost/api/books', { title: 'Dune', author: 'Frank Herbert' }, 'POST');
+    const res = await booksPOST(req);
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 500 on prisma error', async () => {
+    mockBook.create.mockRejectedValueOnce(new Error('db'));
+    const req = makeReq('http://localhost/api/books', { title: 'Dune', author: 'Frank Herbert' }, 'POST');
+    const res = await booksPOST(req);
     expect(res.status).toBe(500);
   });
 });

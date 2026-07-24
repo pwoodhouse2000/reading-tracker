@@ -16,6 +16,7 @@ interface GoogleBooksVolumeInfo {
     identifier: string;
   }>;
   publishedDate?: string;
+  pageCount?: number;
 }
 
 interface GoogleBooksItem {
@@ -97,6 +98,7 @@ export async function searchGoogleBooks(
         publishYear: volumeInfo.publishedDate
           ? parseInt(volumeInfo.publishedDate.split('-')[0])
           : undefined,
+        pageCount: volumeInfo.pageCount,
         apiSource: 'google_books',
       };
     });

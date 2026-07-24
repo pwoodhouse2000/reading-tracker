@@ -14,6 +14,7 @@ interface BookInfo {
   summary?: string;
   coverImageUrl?: string;
   isbn?: string;
+  pageCount?: number;
 }
 
 interface BookFormProps {
@@ -31,6 +32,7 @@ interface BookFormProps {
     isbn: string | null;
     rating: number | null;
     priority: number | null;
+    totalPages: number | null;
     dateStarted: Date | null;
     dateFinished: Date | null;
   };
@@ -73,6 +75,7 @@ export function BookForm({ book, mode, prefill }: BookFormProps) {
     isbn: book?.isbn || prefill?.isbn || '',
     rating: book?.rating || null,
     priority: book?.priority || null,
+    totalPages: book?.totalPages || null,
     dateStarted: book?.dateStarted ? new Date(book.dateStarted).toISOString().split('T')[0] : '',
     dateFinished: book?.dateFinished ? new Date(book.dateFinished).toISOString().split('T')[0] : '',
   });
@@ -162,6 +165,7 @@ export function BookForm({ book, mode, prefill }: BookFormProps) {
       summary: bookInfo.summary || prev.summary,
       coverImageUrl: bookInfo.coverImageUrl || prev.coverImageUrl,
       isbn: bookInfo.isbn || prev.isbn,
+      totalPages: bookInfo.pageCount || prev.totalPages,
     }));
     setSearchQuery('');
     setShowResults(false);
@@ -502,6 +506,25 @@ export function BookForm({ book, mode, prefill }: BookFormProps) {
                 placeholder="1 = highest"
               />
             </div>
+          </div>
+
+          {/* Total Pages */}
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-foreground">
+              Total Pages <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+            </label>
+            <input
+              type="number"
+              name="totalPages"
+              value={formData.totalPages ?? ''}
+              onChange={handleChange}
+              min="1"
+              className={inputClass}
+              placeholder="e.g. 320"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Enables page progress tracking while reading
+            </p>
           </div>
 
           {/* Sub-category with emoji picker */}

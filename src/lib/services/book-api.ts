@@ -73,6 +73,7 @@ function combineBooks(a: BookInfo, b: BookInfo): BookInfo {
     summary: google.summary || ol.summary || a.summary || b.summary,
     isbn: a.isbn || b.isbn,
     publishYear: a.publishYear || b.publishYear,
+    pageCount: a.pageCount || b.pageCount,
     apiSource: 'combined',
   };
 }
@@ -206,7 +207,7 @@ export async function searchBookByISBN(isbn: string): Promise<BookInfo | null> {
 export async function enrichBook(
   title: string,
   author?: string
-): Promise<{ summary?: string; coverImageUrl?: string; isbn?: string; apiSource?: string } | null> {
+): Promise<{ summary?: string; coverImageUrl?: string; isbn?: string; totalPages?: number; apiSource?: string } | null> {
   const query = [title, author].filter(Boolean).join(' ').trim();
   const results = await searchBooks(query);
   const best = results[0];
@@ -219,6 +220,7 @@ export async function enrichBook(
     summary: best.summary,
     coverImageUrl: best.coverImageUrl,
     isbn: best.isbn,
+    totalPages: best.pageCount,
     apiSource: best.apiSource,
   };
 }
