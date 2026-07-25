@@ -8,6 +8,7 @@ import { HeaderNav } from '@/components/layout/header-nav';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { ReadingChat } from '@/components/ai/reading-chat';
+import { AdminOnly } from '@/components/auth/admin-only';
 
 export const metadata: Metadata = {
   title: "Pete's Reading Tracker",
@@ -19,8 +20,8 @@ export const metadata: Metadata = {
     title: "Pete's Reading",
   },
   icons: {
-    icon: '/icons/icon.svg',
-    apple: '/icons/icon-180.png',
+    icon: '/icons/icon.svg?v=20260724',
+    apple: '/icons/icon-180.png?v=20260724',
   },
 };
 
@@ -110,7 +111,9 @@ export default function RootLayout({
               <InstallPrompt />
 
               {/* AI Chat Widget */}
-              <ReadingChat />
+              <AdminOnly>
+                <ReadingChat />
+              </AdminOnly>
             </div>
           </AuthProvider>
         </ThemeProvider>

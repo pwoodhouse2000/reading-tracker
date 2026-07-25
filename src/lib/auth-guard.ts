@@ -1,28 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-
-const AUTH_COOKIE_NAME = 'reading-tracker-auth';
-const AUTH_TOKEN_VALUE = 'authenticated';
-
-// Check if admin password is configured
-function isAuthConfigured(): boolean {
-  return !!process.env.ADMIN_PASSWORD;
-}
-
-// Check if the request is authenticated
-async function isRequestAuthenticated(): Promise<boolean> {
-  if (!isAuthConfigured()) {
-    return true; // No password set, allow all
-  }
-  
-  const cookieStore = await cookies();
-  const authCookie = cookieStore.get(AUTH_COOKIE_NAME);
-  return authCookie?.value === AUTH_TOKEN_VALUE;
-}
+import { isAuthenticated } from '@/lib/auth';
 
 // Guard function to protect API routes that modify data
 export async function requireAuth(): Promise<NextResponse | null> {
-  const authenticated = await isRequestAuthenticated();
+  const authenticated = await isAuthenticated();
   
   if (!authenticated) {
     return NextResponse.json(

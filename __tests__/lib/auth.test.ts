@@ -19,11 +19,13 @@ jest.mock('next/headers', () => {
 
 import {
   isAuthConfigured,
+  isAuthRequired,
   verifyPassword,
   isAuthenticated,
   setAuthCookie,
   clearAuthCookie,
 } from '@/lib/auth';
+import { createAuthToken } from '@/lib/auth-token';
 
 // Access the shared cookie mock
 const { _cookieMock: cookieMock } = jest.requireMock('next/headers') as {
@@ -52,6 +54,21 @@ describe('auth module', () => {
     it('returns true when ADMIN_PASSWORD is set', () => {
       process.env.ADMIN_PASSWORD = 'secret';
       expect(isAuthConfigured()).toBe(true);
+    });
+  });
+
+  describe('isAuthRequired', () => {
+    it('is optional without a password outside production', () => {
+      delete process.env.ADMIN_PASSWORD;
+      (process.env as Record<string, string>).NODE_ENV = 'test';
+      expect(isAuthRequired()).toBe(false);
+    });
+
+    it('fails closed without a password in production', () => {
+      delete process.env.ADMIN_PASSWORD;
+      (process.env as Record<string, string>).NODE_ENV = 'production';
+      expect(isAuthRequired()).toBe(true);
+      expect(verifyPassword('anything')).toBe(false);
     });
   });
 
@@ -87,10 +104,16 @@ describe('auth module', () => {
       expect(await isAuthenticated()).toBe(true);
     });
 
-    it('returns true when auth cookie has "authenticated" value', async () => {
+    it('returns true when auth cookie has a valid signed token', async () => {
+      process.env.ADMIN_PASSWORD = 'secret';
+      cookieMock.get.mockReturnValue({ value: await createAuthToken() });
+      expect(await isAuthenticated()).toBe(true);
+    });
+
+    it('rejects the old forgeable cookie value', async () => {
       process.env.ADMIN_PASSWORD = 'secret';
       cookieMock.get.mockReturnValue({ value: 'authenticated' });
-      expect(await isAuthenticated()).toBe(true);
+      expect(await isAuthenticated()).toBe(false);
     });
 
     it('returns false when auth cookie has wrong value', async () => {
@@ -108,14 +131,17 @@ describe('auth module', () => {
 
   // -----------------------------------------------------------------------
   describe('setAuthCookie', () => {
-    it('sets auth cookie with correct name and value', async () => {
+    it('sets auth cookie with a signed value', async () => {
+      process.env.ADMIN_PASSWORD = 'secret';
       await setAuthCookie();
+      const token = cookieMock.set.mock.calls[0][1];
+      expect(token).toMatch(/^v1\.\d+\.[A-Za-z0-9_-]+$/);
       expect(cookieMock.set).toHaveBeenCalledWith(
         'reading-tracker-auth',
-        'authenticated',
+        token,
         expect.objectContaining({
           httpOnly: true,
-          sameSite: 'lax',
+          sameSite: 'strict',
           path: '/',
         })
       );
@@ -123,6 +149,7 @@ describe('auth module', () => {
 
     it('sets secure flag in production', async () => {
       (process.env as Record<string, string>).NODE_ENV = 'production';
+      process.env.ADMIN_PASSWORD = 'secret';
       await setAuthCookie();
       expect(cookieMock.set).toHaveBeenCalledWith(
         expect.any(String),
