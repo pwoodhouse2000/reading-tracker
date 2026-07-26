@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ReadingStatus, Category } from '@prisma/client';
+import { requireAuth } from '@/lib/auth-guard';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -23,6 +24,9 @@ interface BookData {
 
 // POST /api/ai/chat - Chat about reading history
 export async function POST(request: NextRequest) {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   if (!OPENAI_API_KEY) {
     return NextResponse.json(
       { error: 'AI features not configured. Please add OPENAI_API_KEY.' },

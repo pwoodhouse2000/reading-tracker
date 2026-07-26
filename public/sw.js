@@ -1,30 +1,36 @@
-const CACHE_NAME = 'reading-tracker-v2';
-const API_CACHE = 'reading-tracker-api-v1';
+const CACHE_NAME = 'reading-tracker-v3';
+const API_CACHE = 'reading-tracker-api-v2';
 const STATIC_ASSETS = [
   '/',
-  '/books',
-  '/notes',
-  '/reports',
-  '/icons/icon.svg',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/icons/icon.svg?v=20260724',
+  '/icons/icon-192.png?v=20260724',
+  '/icons/icon-512.png?v=20260724',
   '/manifest.json',
 ];
 
 // Read-only API endpoints that are safe to serve stale-while-revalidate.
 // Anything auth-sensitive or write-heavy stays network-only.
-const CACHEABLE_API_PREFIXES = [
-  '/api/books',
-  '/api/notes',
+const CACHEABLE_API_PATHS = new Set([
   '/api/stats',
   '/api/goals',
   '/api/reports',
-];
+]);
 
 function isCacheableApi(url) {
-  return CACHEABLE_API_PREFIXES.some(
-    (prefix) => url.pathname === prefix || url.pathname.startsWith(prefix + '/')
-  );
+  return CACHEABLE_API_PATHS.has(url.pathname);
+}
+
+function responseCanBeCached(response) {
+  const cacheControl = response.headers.get('cache-control') || '';
+  return response.status === 200 && !/private|no-store/i.test(cacheControl);
+}
+
+function isPrivatePage(url) {
+  return url.pathname === '/login'
+    || url.pathname === '/notes'
+    || url.pathname.startsWith('/settings')
+    || url.pathname === '/books/new'
+    || /\/books\/[^/]+\/edit$/.test(url.pathname);
 }
 
 // Install event - cache static assets
@@ -59,7 +65,7 @@ function staleWhileRevalidate(request) {
     cache.match(request).then((cached) => {
       const networkFetch = fetch(request)
         .then((response) => {
-          if (response.status === 200) {
+          if (responseCanBeCached(response)) {
             cache.put(request, response.clone());
           }
           return response;
@@ -86,6 +92,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Never persist authenticated or personal editing surfaces in Cache Storage.
+  if (url.origin === self.location.origin && isPrivatePage(url)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   // Pages/static assets: network first, fallback to cache
   event.respondWith(
     fetch(event.request)
@@ -94,7 +106,7 @@ self.addEventListener('fetch', (event) => {
         const responseClone = response.clone();
 
         // Cache successful responses
-        if (response.status === 200) {
+        if (responseCanBeCached(response)) {
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseClone);
           });

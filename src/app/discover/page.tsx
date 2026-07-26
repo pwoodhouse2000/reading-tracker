@@ -2,6 +2,9 @@
 
 import { AIRecommendations } from '@/components/ai/recommendations';
 import { Sparkles, BookOpen, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
+import { AdminOnly } from '@/components/auth/admin-only';
+import { buttonVariants } from '@/components/ui/button';
 
 export default function DiscoverPage() {
   return (
@@ -49,7 +52,24 @@ export default function DiscoverPage() {
       </div>
 
       {/* Recommendations Component */}
-      <AIRecommendations />
+      <AdminOnly
+        fallback={
+          <div className="p-6 rounded-2xl bg-card border border-border text-center space-y-3">
+            <h2 className="text-xl font-semibold">Admin access required</h2>
+            <p className="text-muted-foreground">
+              Sign in to generate recommendations from your private reading history.
+            </p>
+            <Link
+              href="/login?returnUrl=/discover"
+              className={buttonVariants({ variant: 'default' })}
+            >
+              Sign in
+            </Link>
+          </div>
+        }
+      >
+        <AIRecommendations />
+      </AdminOnly>
 
       {/* Tips */}
       <div className="p-6 rounded-2xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 border border-violet-200/50 dark:border-violet-800/50">

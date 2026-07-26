@@ -114,6 +114,9 @@ DATABASE_URL="file:./dev.db"
 # Admin password for editing
 ADMIN_PASSWORD="your-secure-password"
 
+# Optional separate secret for signing admin sessions
+AUTH_SECRET="generate-a-long-random-value"
+
 # Optional: Todoist integration
 TODOIST_API_TOKEN=""
 
@@ -155,6 +158,7 @@ The app is deployed on Google Cloud Run with:
 | `TURSO_DATABASE_URL` | Turso database URL |
 | `TURSO_AUTH_TOKEN` | Turso authentication token |
 | `ADMIN_PASSWORD` | Admin login password |
+| `AUTH_SECRET` | Optional independent secret for signed admin sessions |
 | `TODOIST_API_TOKEN` | Todoist API token |
 | `NOTION_API_TOKEN` | Notion integration token |
 | `NOTION_DATABASE_ID` | Notion database ID |

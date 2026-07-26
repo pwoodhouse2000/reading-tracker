@@ -25,6 +25,7 @@ jest.mock('next/server', () => {
 });
 
 import { requireAuth, withAuth } from '@/lib/auth-guard';
+import { createAuthToken } from '@/lib/auth-token';
 
 const { _cookieMock: cookieMock } = jest.requireMock('next/headers') as {
   _cookieMock: { get: jest.Mock };
@@ -51,7 +52,7 @@ describe('auth-guard', () => {
 
     it('returns null when user is authenticated', async () => {
       process.env.ADMIN_PASSWORD = 'secret';
-      cookieMock.get.mockReturnValue({ value: 'authenticated' });
+      cookieMock.get.mockReturnValue({ value: await createAuthToken() });
       expect(await requireAuth()).toBeNull();
     });
 

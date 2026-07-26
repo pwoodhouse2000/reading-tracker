@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-const AUTH_COOKIE_NAME = 'reading-tracker-auth';
-const AUTH_TOKEN_VALUE = 'authenticated';
+import { AUTH_COOKIE_NAME, verifyAuthToken } from '@/lib/auth-token';
 
 // Paths that require authentication
 const PROTECTED_PATHS = [
@@ -29,7 +27,7 @@ function isProtectedPath(pathname: string): boolean {
   return false;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Skip if no admin password is configured (check env)
@@ -44,7 +42,7 @@ export function middleware(request: NextRequest) {
   
   // Check auth cookie
   const authCookie = request.cookies.get(AUTH_COOKIE_NAME);
-  const isAuthenticated = authCookie?.value === AUTH_TOKEN_VALUE;
+  const isAuthenticated = await verifyAuthToken(authCookie?.value);
   
   if (!isAuthenticated) {
     // Redirect to login with return URL

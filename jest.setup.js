@@ -1,5 +1,15 @@
 import '@testing-library/jest-dom';
 
+// jsdom exposes crypto without Web Crypto's subtle API. Authentication tokens
+// use the same standards-based API available in Node and the Next.js runtime.
+if (!global.crypto || !global.crypto.subtle) {
+  const { webcrypto } = require('node:crypto');
+  Object.defineProperty(global, 'crypto', {
+    configurable: true,
+    value: webcrypto,
+  });
+}
+
 // Polyfill Web Fetch API globals when missing
 // (needed by next/server imports in jsdom; Node 18+ has native fetch)
 if (typeof global.Request === 'undefined') {
