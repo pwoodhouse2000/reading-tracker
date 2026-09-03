@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { BookCard } from './book-card';
 import { SwipeableBookCard } from './swipeable-book-card';
 import { SortableBookList } from './sortable-book-list';
@@ -20,15 +21,12 @@ interface Book {
   coverImageUrl: string | null;
   summary: string | null;
   createdAt: Date | string;
+  dateFinished?: Date | string | null;
   priority: number | null;
 }
 
 interface BookListProps {
   books: Book[];
-  initialStatus?: string;
-  initialCategory?: string;
-  initialSubCategory?: string;
-  initialSearch?: string;
 }
 
 const statusFilters = [
@@ -51,32 +49,54 @@ const statusOrder = {
 // Statuses where drag-and-drop reordering makes sense
 const reorderableStatuses = ['TO_READ', 'NEXT_UP', 'READING'];
 
-export function BookList({ 
-  books, 
-  initialStatus,
-  initialCategory,
-  initialSubCategory,
-  initialSearch 
-}: BookListProps) {
+export function BookList({ books }: BookListProps) {
   const { isAuthenticated } = useAuth();
-  const hasUrlFilters = !!(initialStatus || initialCategory || initialSubCategory);
-  
-  const [statusFilter, setStatusFilter] = useState<string | null>(initialStatus || null);
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(initialCategory || null);
-  const [subCategoryFilter, setSubCategoryFilter] = useState<string | null>(initialSubCategory || null);
-  const [groupByStatus, setGroupByStatus] = useState(!hasUrlFilters);
-  const [sortBy, setSortBy] = useState<'title' | 'author' | 'rating' | 'recent' | 'priority'>('priority');
+  const searchParams = useSearchParams();
+  const rawStatus = searchParams.get('status');
+  const statusFilter = statusFilters.some(filter => filter.value === rawStatus) ? rawStatus : null;
+  const rawCategory = searchParams.get('category');
+  const categoryFilter = rawCategory === 'FICTION' || rawCategory === 'NON_FICTION' ? rawCategory : null;
+  const subCategoryFilter = searchParams.get('subCategory');
+  const rawYear = searchParams.get('year');
+  const yearFilter = rawYear && /^\d{4}$/.test(rawYear) ? rawYear : null;
+  const searchQuery = searchParams.get('search') || '';
+  const hasFilters = !!(statusFilter || categoryFilter || subCategoryFilter || yearFilter || searchQuery);
+  const groupByStatus = searchParams.has('group')
+    ? searchParams.get('group') === 'true'
+    : !(statusFilter || categoryFilter || subCategoryFilter || yearFilter);
+  const rawSort = searchParams.get('sort');
+  const sortBy = rawSort && ['title', 'author', 'rating', 'recent', 'priority'].includes(rawSort) ? rawSort : 'priority';
+  const viewMode = searchParams.get('view') === 'compact' ? 'compact' : 'grid';
   const [enriching, setEnriching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(initialSearch || '');
-  const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
   const [reorderMode, setReorderMode] = useState(false);
 
-  // Enable reorder mode only when viewing a single reorderable status
-  const canReorder = isAuthenticated && 
-    statusFilter && 
-    reorderableStatuses.includes(statusFilter) && 
-    !searchQuery &&
-    sortBy === 'priority';
+  // Next.js syncs native history changes with useSearchParams, including Back.
+  const updateParams = (updates: Record<string, string | null>, replace = false) => {
+    const params = new URLSearchParams(window.location.search);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    });
+    const query = params.toString();
+    const url = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
+    if (replace) window.history.replaceState(null, '', url);
+    else window.history.pushState(null, '', url);
+  };
+
+  const clearFilters = () => updateParams({ status: null, category: null, subCategory: null, year: null, search: null });
+  const years = [...new Set(books.flatMap(book => {
+    if (!book.dateFinished) return [];
+    const year = new Date(book.dateFinished).getUTCFullYear();
+    return Number.isFinite(year) ? [String(year)] : [];
+  }))];
+  if (yearFilter && !years.includes(yearFilter)) years.push(yearFilter);
+  years.sort((a, b) => Number(b) - Number(a));
+
+  // Reorder only an entire status queue, never a filtered subset.
+  const canReorder = isAuthenticated && statusFilter &&
+    reorderableStatuses.includes(statusFilter) && !searchQuery &&
+    !categoryFilter && !subCategoryFilter && !yearFilter &&
+    !groupByStatus && sortBy === 'priority';
 
   // Turn off reorder mode if conditions change
   useEffect(() => {
@@ -113,7 +133,7 @@ export function BookList({
   const sortedAndGroupedBooks = useMemo(() => {
     let filtered = books.filter((book) => {
       if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
+      const query = searchQuery.trim().toLowerCase();
       return (
         book.title.toLowerCase().includes(query) ||
         book.author.toLowerCase().includes(query) ||
@@ -132,6 +152,11 @@ export function BookList({
 
     if (subCategoryFilter) {
       filtered = filtered.filter((book) => book.subCategory === subCategoryFilter);
+    }
+
+    if (yearFilter) {
+      filtered = filtered.filter(book => book.dateFinished &&
+        new Date(book.dateFinished).getUTCFullYear() === Number(yearFilter));
     }
 
     const sortBooks = (booksToSort: Book[]) => {
@@ -178,7 +203,7 @@ export function BookList({
     });
 
     return { grouped: true, booksByStatus: grouped };
-  }, [books, statusFilter, categoryFilter, subCategoryFilter, groupByStatus, sortBy, searchQuery]);
+  }, [books, statusFilter, categoryFilter, subCategoryFilter, groupByStatus, sortBy, searchQuery, yearFilter]);
 
   const totalFiltered = sortedAndGroupedBooks.grouped
     ? Object.values(sortedAndGroupedBooks.booksByStatus || {}).flat().length
@@ -190,15 +215,17 @@ export function BookList({
       <div className="relative">
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
         <input
-          type="text"
+          type="search"
+          aria-label="Search library"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => updateParams({ search: e.target.value }, true)}
           placeholder="Search by title, author, or keywords..."
           className="w-full pl-12 pr-12 py-3 bg-white dark:bg-gray-800 border-2 border-transparent rounded-xl shadow-sm focus:border-primary focus:ring-0 transition-all text-base"
         />
         {searchQuery && (
           <button
-            onClick={() => setSearchQuery('')}
+            aria-label="Clear search"
+            onClick={() => updateParams({ search: null }, true)}
             className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="h-5 w-5" />
@@ -214,7 +241,8 @@ export function BookList({
             {statusFilters.map((filter) => (
               <button
                 key={filter.label}
-                onClick={() => setStatusFilter(filter.value)}
+                aria-pressed={statusFilter === filter.value}
+                onClick={() => updateParams({ status: filter.value, year: filter.value === 'FINISHED' ? yearFilter : null })}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
                   statusFilter === filter.value
                     ? 'bg-primary text-primary-foreground shadow-md scale-105'
@@ -226,7 +254,7 @@ export function BookList({
               </button>
             ))}
           </div>
-          <Button
+          {isAuthenticated && <Button
             onClick={handleEnrich}
             disabled={enriching}
             variant="outline"
@@ -234,7 +262,40 @@ export function BookList({
           >
             <Sparkles className={`h-4 w-4 mr-2 ${enriching ? 'animate-pulse' : ''}`} />
             {enriching ? 'Enriching...' : 'Add Covers & Summaries'}
-          </Button>
+          </Button>}
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <label className="flex items-center gap-2 text-sm">
+            Category
+            <select
+              value={categoryFilter || ''}
+              onChange={e => updateParams({ category: e.target.value, subCategory: null })}
+              className="rounded-lg border border-input bg-background px-3 py-2"
+            >
+              <option value="">All categories</option>
+              <option value="FICTION">Fiction</option>
+              <option value="NON_FICTION">Non-Fiction</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            Finished in
+            <select
+              value={yearFilter || ''}
+              onChange={e => updateParams({ year: e.target.value, ...(e.target.value ? { status: 'FINISHED' } : {}) })}
+              className="rounded-lg border border-input bg-background px-3 py-2"
+            >
+              <option value="">Any year</option>
+              {years.map(year => <option key={year} value={year}>{year}</option>)}
+            </select>
+          </label>
+          {subCategoryFilter && (
+            <Button variant="outline" size="sm" onClick={() => updateParams({ subCategory: null })}>
+              {subCategoryFilter} <X aria-hidden="true" className="h-4 w-4 ml-2" />
+              <span className="sr-only">Remove subcategory filter</span>
+            </Button>
+          )}
+          {hasFilters && <Button variant="ghost" size="sm" onClick={clearFilters}>Clear filters</Button>}
         </div>
 
         {/* Sort and View Controls */}
@@ -243,7 +304,10 @@ export function BookList({
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Group by Status</label>
               <button
-                onClick={() => setGroupByStatus(!groupByStatus)}
+                role="switch"
+                aria-label="Group by status"
+                aria-checked={groupByStatus}
+                onClick={() => updateParams({ group: String(!groupByStatus) })}
                 className={`w-12 h-6 rounded-full transition-all relative ${
                   groupByStatus ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
@@ -257,10 +321,11 @@ export function BookList({
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Sort by</label>
+              <label htmlFor="library-sort" className="text-sm font-medium text-gray-600 dark:text-gray-400">Sort by</label>
               <select
+                id="library-sort"
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                onChange={(e) => updateParams({ sort: e.target.value })}
                 className="px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary"
               >
                 <option value="priority">Priority</option>
@@ -275,6 +340,7 @@ export function BookList({
             {canReorder && (
               <div className="flex items-center gap-2">
                 <button
+                  aria-pressed={reorderMode}
                   onClick={() => setReorderMode(!reorderMode)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     reorderMode
@@ -291,7 +357,9 @@ export function BookList({
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setViewMode('grid')}
+              aria-label="Grid view"
+              aria-pressed={viewMode === 'grid'}
+              onClick={() => updateParams({ view: 'grid' })}
               className={`p-2 rounded-lg transition-all ${
                 viewMode === 'grid'
                   ? 'bg-primary text-primary-foreground'
@@ -301,7 +369,9 @@ export function BookList({
               <LayoutGrid className="h-4 w-4" />
             </button>
             <button
-              onClick={() => setViewMode('compact')}
+              aria-label="Compact view"
+              aria-pressed={viewMode === 'compact'}
+              onClick={() => updateParams({ view: 'compact' })}
               className={`p-2 rounded-lg transition-all ${
                 viewMode === 'compact'
                   ? 'bg-primary text-primary-foreground'
@@ -321,13 +391,10 @@ export function BookList({
           </div>
         )}
 
-        {/* Results count */}
-        {searchQuery && (
-          <p className="text-sm text-muted-foreground">
-            Found <span className="font-semibold text-foreground">{totalFiltered}</span> books
-            matching "<span className="font-medium">{searchQuery}</span>"
-          </p>
-        )}
+        <p role="status" className="text-sm text-muted-foreground">
+          Showing <span className="font-semibold text-foreground">{totalFiltered}</span> of {books.length} books
+          {searchQuery.trim() && <> matching “{searchQuery.trim()}”</>}
+        </p>
       </div>
 
       {/* Books Display */}
@@ -342,10 +409,12 @@ export function BookList({
               ? `No books match "${searchQuery}". Try a different search term.`
               : 'Try selecting a different filter or add some books to get started.'}
           </p>
+          {hasFilters && <Button variant="outline" className="mt-4" onClick={clearFilters}>Show all books</Button>}
         </div>
       ) : reorderMode && !sortedAndGroupedBooks.grouped ? (
         // Reorder mode - use sortable list
         <SortableBookList
+          key={statusFilter}
           books={sortedAndGroupedBooks.books || []}
           compact={viewMode === 'compact'}
         />
