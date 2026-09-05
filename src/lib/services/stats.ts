@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { historyBooks, historyCount } from './reading-history';
 
 export interface MonthlyStats {
   month: number; // 1-12
@@ -51,7 +52,7 @@ export async function getMonthlyStats(year: number): Promise<MonthlyStats[]> {
   const startOfYear = new Date(year, 0, 1);
   const endOfYear = new Date(year + 1, 0, 1);
 
-  const books = await prisma.book.findMany({
+  const books = await historyBooks({
     where: {
       OR: [
         {
@@ -105,7 +106,7 @@ export async function getYearlyStats(year: number): Promise<YearlyStats> {
   const startOfYear = new Date(year, 0, 1);
   const endOfYear = new Date(year + 1, 0, 1);
 
-  const finishedBooks = await prisma.book.findMany({
+  const finishedBooks = await historyBooks({
     where: {
       dateFinished: {
         gte: startOfYear,
@@ -122,13 +123,11 @@ export async function getYearlyStats(year: number): Promise<YearlyStats> {
     },
   });
 
-  const startedBooks = await prisma.book.count({
-    where: {
+  const startedBooks = await historyCount({
       dateStarted: {
         gte: startOfYear,
         lt: endOfYear,
       },
-    },
   });
 
   // Calculate average rating
@@ -189,25 +188,21 @@ export async function getReadingVelocity(): Promise<ReadingVelocity> {
   const previousYear = currentYear - 1;
 
   // Current year stats
-  const currentYearBooks = await prisma.book.count({
-    where: {
+  const currentYearBooks = await historyCount({
       dateFinished: {
         gte: new Date(currentYear, 0, 1),
         lt: new Date(currentYear + 1, 0, 1),
       },
       status: 'FINISHED',
-    },
   });
 
   // Previous year stats
-  const previousYearBooks = await prisma.book.count({
-    where: {
+  const previousYearBooks = await historyCount({
       dateFinished: {
         gte: new Date(previousYear, 0, 1),
         lt: new Date(previousYear + 1, 0, 1),
       },
       status: 'FINISHED',
-    },
   });
 
   const currentBooksPerMonth = currentMonth > 0 ? currentYearBooks / currentMonth : 0;
@@ -256,14 +251,12 @@ export async function getGoalProgress(year?: number): Promise<GoalProgress | nul
     return null;
   }
 
-  const booksFinished = await prisma.book.count({
-    where: {
+  const booksFinished = await historyCount({
       dateFinished: {
         gte: new Date(targetYear, 0, 1),
         lt: new Date(targetYear + 1, 0, 1),
       },
       status: 'FINISHED',
-    },
   });
 
   const now = new Date();

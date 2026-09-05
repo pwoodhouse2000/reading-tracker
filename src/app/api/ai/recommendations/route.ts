@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth-guard';
+import { normalize } from '@/lib/library-tools';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -36,9 +37,7 @@ export async function GET(request: NextRequest) {
         select: { title: true, author: true },
       }),
       prisma.book.findMany({
-        where: { status: { in: ['TO_READ', 'NEXT_UP'] } },
         select: { title: true, author: true },
-        take: 10,
       }),
     ]);
 
@@ -162,6 +161,14 @@ Please recommend 5 books I might enjoy, with explanations.`;
       recommendations = [];
     }
 
+    const owned = new Set(toReadBooks.map(b => normalize(b.title)));
+    const seen = new Set<string>();
+    recommendations = Array.isArray(recommendations) ? recommendations.filter(r => {
+      if (!r || typeof r.title !== 'string' || typeof r.author !== 'string' || typeof r.reason !== 'string') return false;
+      const key = normalize(r.title);
+      if (owned.has(key) || seen.has(key)) return false;
+      seen.add(key); return true;
+    }) : [];
     return NextResponse.json({
       recommendations,
       context: {

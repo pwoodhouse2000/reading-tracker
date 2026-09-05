@@ -11,7 +11,7 @@ jest.mock('next/server', () => ({
   },
 }));
 
-import { middleware } from '@/middleware';
+import { proxy as middleware } from '@/proxy';
 import { createAuthToken } from '@/lib/auth-token';
 
 const { NextResponse } = jest.requireMock('next/server') as {

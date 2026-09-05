@@ -22,7 +22,6 @@ if (typeof global.Request === 'undefined') {
     if (typeof global.WritableStream === 'undefined') global.WritableStream = webStreams.WritableStream;
     if (typeof global.TransformStream === 'undefined') global.TransformStream = webStreams.TransformStream;
     const { MessageChannel, MessagePort } = require('node:worker_threads');
-    if (typeof global.MessageChannel === 'undefined') global.MessageChannel = MessageChannel;
     if (typeof global.MessagePort === 'undefined') global.MessagePort = MessagePort;
     const undici = require('undici');
     global.Request = undici.Request;

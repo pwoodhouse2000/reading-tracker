@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { bookForViewer } from '@/lib/privacy';
 import {
   getBestBooks,
   getReadingStats,
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
         startDate: startDateParam,
         endDate: endDateParam,
       },
-      bestBooks,
+      bestBooks: bestBooks.map(b => bookForViewer(b)),
       stats,
       monthlyCounts,
       topAuthors,

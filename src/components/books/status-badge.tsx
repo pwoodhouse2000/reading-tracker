@@ -1,10 +1,11 @@
 import { Badge } from '@/components/ui/badge';
 
 interface StatusBadgeProps {
-  status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED';
+  status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED' | 'DNF';
 }
 
 const statusConfig = {
+  DNF: { label: 'Did not finish', className: 'bg-stone-100 text-stone-700 border-stone-200' },
   TO_READ: {
     label: 'To Read',
     className: 'bg-slate-100/90 text-slate-700 border-slate-200 backdrop-blur-sm',

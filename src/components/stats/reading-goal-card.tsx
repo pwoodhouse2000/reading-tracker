@@ -51,7 +51,7 @@ export function ReadingGoalCard() {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  async function fetchData() {
     try {
       const [goalRes, statsRes] = await Promise.all([
         fetch(`/api/goals?year=${currentYear}`),

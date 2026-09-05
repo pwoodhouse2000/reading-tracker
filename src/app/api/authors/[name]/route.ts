@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { isAuthenticated } from '@/lib/auth';
+import { privateHeaders } from '@/lib/privacy';
 import { getAuthorData } from '@/lib/services/authors';
 import { searchPodcastEpisodes, isPodcastSearchEnabled } from '@/lib/services/podcasts';
 
@@ -12,6 +14,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { name } = await params;
     const authorName = decodeURIComponent(name);
+    const admin = await isAuthenticated();
 
     // Fetch external author data, user's books, and podcasts in parallel
     const [externalData, userBooks, podcastData] = await Promise.all([
@@ -24,6 +27,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         },
         include: {
           notes: {
+            where: admin ? undefined : { isPublic:true, isQuote:true },
             select: {
               id: true,
               content: true,
@@ -83,7 +87,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         rating: book.rating,
         dateFinished: book.dateFinished,
         coverImageUrl: book.coverImageUrl,
-        thoughts: book.thoughts,
+        thoughts: admin ? book.thoughts : null,
       })),
       userStats: {
         totalBooks: userBooks.length,
@@ -102,7 +106,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         totalFound: 0,
         enabled: isPodcastSearchEnabled(),
       },
-    });
+    }, {headers:privateHeaders});
   } catch (error) {
     console.error('Error fetching author data:', error);
     return NextResponse.json(

@@ -16,7 +16,7 @@ interface Book {
   id: string;
   title: string;
   author: string;
-  status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED';
+  status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED' | 'DNF';
   mediaTypes: string;
   category: 'FICTION' | 'NON_FICTION';
   subCategory?: string | null;
@@ -45,6 +45,7 @@ const statusOptions: { value: Book['status']; label: string }[] = [
   { value: 'READING', label: 'Reading' },
   { value: 'PAUSED', label: 'Paused' },
   { value: 'FINISHED', label: 'Finished' },
+  { value: 'DNF', label: 'Did not finish' },
 ];
 
 function getTitleGradient(title: string): string {
@@ -90,10 +91,12 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
 
       if (!response.ok) {
         setCurrentRating(previousRating);
+        alert('Rating was not saved. Please try again.');
       }
     } catch (error) {
       console.error('Failed to update rating:', error);
       setCurrentRating(previousRating);
+      alert('Rating was not saved. Please try again.');
     } finally {
       setIsUpdatingRating(false);
     }
@@ -143,9 +146,10 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
           onStatusChange(book.id, newStatus);
         }
         router.refresh();
-      }
+      } else { const result=await response.json(); alert(result.error || 'Status was not saved. Please try again.'); }
     } catch (error) {
       console.error('Failed to update status:', error);
+      alert('Status was not saved. Please try again.');
     } finally {
       setIsUpdating(false);
       setShowStatusMenu(false);
@@ -153,7 +157,7 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
   };
 
   // Status dropdown component
-  const StatusDropdown = ({ position = 'bottom' }: { position?: 'bottom' | 'top' }) => (
+  const renderStatusDropdown = ({ position = 'bottom' }: { position?: 'bottom' | 'top' } = {}) => (
     <div 
       className={`absolute ${position === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'} right-0 z-50 min-w-[140px] py-1 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700`}
       onClick={(e) => e.stopPropagation()}
@@ -237,7 +241,7 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
                     <StatusBadge status={book.status} />
                     {isAuthenticated && <ChevronDown className="h-3 w-3 text-muted-foreground" />}
                   </button>
-                  {showStatusMenu && <StatusDropdown position="top" />}
+                  {showStatusMenu && renderStatusDropdown({position:'top'})}
                 </div>
               </div>
             </div>
@@ -290,7 +294,7 @@ export function BookCard({ book, compact = false, onStatusChange }: BookCardProp
                     </div>
                   )}
                 </button>
-                {showStatusMenu && <StatusDropdown />}
+                {showStatusMenu && renderStatusDropdown()}
               </div>
 
               <div className="absolute bottom-3 left-3 z-10 flex gap-1">

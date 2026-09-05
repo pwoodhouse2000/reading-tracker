@@ -9,6 +9,8 @@ A personal reading tracker web application with AI-powered recommendations, buil
 ### 📚 Core Reading Management
 - **Full CRUD operations** for books with title, author, media type, category, status
 - **Status tracking**: To Read → Next Up → Reading → Paused → Finished
+- **Did not finish & rereads**: Stop a book without marking it finished; start a reread while preserving dates and ratings from previous readings.
+- **Flexible progress**: Pages, percentage, and audiobook minutes; quick page updates from the dashboard.
 - **Smart date tracking**: Automatic start/finish dates based on status changes
 - **Ratings & Reviews**: 1-5 star ratings with personal thoughts
 - **Categories**: Fiction/Non-Fiction with custom sub-categories
@@ -34,10 +36,14 @@ A personal reading tracker web application with AI-powered recommendations, buil
 ### 📝 Notes & Quotes
 - **Per-book notes**: Add notes with optional page references
 - **Notes search**: Find across all your book notes
+- **Private by default**: Notes and thoughts are private. Individual quotes can be explicitly shared publicly; tags and Markdown/Obsidian export are available.
+- **Rediscovery**: A rotating daily quote on the Notes page resurfaces saved passages.
 - **Dedicated notes page**: Browse and search all annotations
 
 ### 🤖 AI Features (Powered by OpenAI)
 - **Smart Recommendations**: Personalized book suggestions based on your reading history
+- **Choose my next book**: Three picks from the existing backlog, ranked by mood, favorite authors/genres and shelf priority, filtered by format and estimated reading time. This uses local ranking, without an AI request.
+- **Library cleanup**: Settings → Library cleanup flags potential duplicates and category mismatches, with bulk category edits. Suggestions require selection in the app; records are never automatically merged or removed.
 - **Reading Chat**: Ask questions about your library, stats, and patterns
 - **Context-aware**: AI knows your ratings, favorites, and reading velocity
 
@@ -53,7 +59,7 @@ A personal reading tracker web application with AI-powered recommendations, buil
 
 ### 🔐 Security
 - **Admin Authentication**: Password-protected editing features
-- **Public Viewing**: Anyone can browse your reading stats
+- **Public Viewing**: Anyone can browse books, reading stats and explicitly shared quotes. Thoughts and other notes are admin-only.
 - **Secure Secrets**: All API keys stored in Google Secret Manager
 
 ## Tech Stack
@@ -74,7 +80,7 @@ A personal reading tracker web application with AI-powered recommendations, buil
 ## Local Development
 
 ### Prerequisites
-- Node.js 20+
+- Node.js 24 (use `nvm use`)
 - npm
 
 ### Setup

@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-guard';
+import { isAuthenticated } from '@/lib/auth';
+import { bookForViewer, privateHeaders } from '@/lib/privacy';
+import { InputError, validateBook, validateProgress } from '@/lib/book-validation';
 
 // GET /api/books/[id] - Get single book
 export async function GET(
@@ -22,7 +25,7 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(book);
+    return NextResponse.json(bookForViewer(book, await isAuthenticated()), { headers: privateHeaders });
   } catch (error) {
     console.error('Error fetching book:', error);
     return NextResponse.json(
@@ -42,13 +45,16 @@ export async function PATCH(
   
   try {
     const { id } = await params;
-    const body = await request.json();
+    const body = validateBook(await request.json());
+    const existing = await prisma.book.findUnique({ where: { id } });
+    if (!existing) return NextResponse.json({ error: 'Book not found' }, { status: 404 });
+    if (existing.status === 'FINISHED' && body.status === 'READING') return NextResponse.json({error:'Use Start a reread on the book page to preserve your completed reading'}, {status:409});
 
     // Auto-set dates based on status changes
-    if (body.status === 'READING' && !body.dateStarted) {
+    if (body.status === 'READING' && body.dateStarted === undefined && !existing.dateStarted) {
       body.dateStarted = new Date();
     }
-    if (body.status === 'FINISHED' && !body.dateFinished) {
+    if (body.status === 'FINISHED' && body.dateFinished === undefined && !existing.dateFinished) {
       body.dateFinished = new Date();
     }
 
@@ -73,17 +79,21 @@ export async function PATCH(
       // Mark the book as fully read when we know the total page count
       let totalPages = body.totalPages;
       if (totalPages === undefined) {
-        const existing = await prisma.book.findUnique({ where: { id } });
         totalPages = existing?.totalPages;
       }
       if (totalPages) {
         body.currentPage = totalPages;
       }
+      body.progressPercent = 100;
+      body.audioMinutes = body.totalAudioMinutes ?? existing.totalAudioMinutes;
     }
     if (body.status === 'TO_READ') {
       // Reset progress when the book goes back on the shelf
       body.currentPage = null;
+      body.audioMinutes = null;
+      body.progressPercent = null;
     }
+    validateProgress({ ...existing, ...body });
 
     const book = await prisma.book.update({
       where: { id },
@@ -93,6 +103,7 @@ export async function PATCH(
 
     return NextResponse.json(book);
   } catch (error) {
+    if (error instanceof InputError || error instanceof SyntaxError) return NextResponse.json({ error: error.message }, { status: 400 });
     console.error('Error updating book:', error);
     return NextResponse.json(
       { error: 'Failed to update book' },

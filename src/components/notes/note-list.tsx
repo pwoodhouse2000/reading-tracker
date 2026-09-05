@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -21,6 +21,9 @@ interface Note {
   content: string;
   page: number | null;
   createdAt: string;
+  isQuote?: boolean;
+  isPublic?: boolean;
+  tags?: string;
   book?: {
     id: string;
     title: string;
@@ -47,11 +50,18 @@ export function NoteList({
 }: NoteListProps) {
   const { isAuthenticated } = useAuth();
   const [notes, setNotes] = useState<Note[]>(initialNotes);
+  useEffect(() => {setNotes(initialNotes.filter(n => isAuthenticated || (n.isPublic && n.isQuote)));}, [initialNotes,isAuthenticated]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newContent, setNewContent] = useState('');
   const [newPage, setNewPage] = useState('');
   const [isQuote, setIsQuote] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
+  const [tags, setTags] = useState('');
+  const [editQuote, setEditQuote] = useState(false);
+  const [editPublic, setEditPublic] = useState(false);
+  const [editTags, setEditTags] = useState('');
+  const [saveError, setSaveError] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editPage, setEditPage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -132,20 +142,24 @@ export function NoteList({
           bookId,
           content: newContent,
           page: newPage || null,
+          isQuote, isPublic: isQuote && isPublic, tags,
         }),
       });
 
+      if (!response.ok) throw new Error((await response.json()).error || 'Could not save note');
       if (response.ok) {
         const note = await response.json();
         setNotes([note, ...notes]);
         setNewContent('');
         setNewPage('');
         setIsQuote(false);
+        setIsPublic(false);setTags('');setSaveError('');
         setShowAddForm(false);
         onNoteAdded?.(note);
       }
     } catch (error) {
       console.error('Failed to add note:', error);
+      setSaveError(error instanceof Error ? error.message : 'Could not save note');
     } finally {
       setIsSaving(false);
     }
@@ -162,17 +176,21 @@ export function NoteList({
         body: JSON.stringify({
           content: editContent,
           page: editPage || null,
+          isQuote: editQuote, isPublic: editQuote && editPublic, tags: editTags,
         }),
       });
 
+      if (!response.ok) throw new Error((await response.json()).error || 'Could not save note');
       if (response.ok) {
         const updatedNote = await response.json();
         setNotes(notes.map(n => n.id === noteId ? updatedNote : n));
         setEditingId(null);
+        setSaveError('');
         onNoteUpdated?.(updatedNote);
       }
     } catch (error) {
       console.error('Failed to update note:', error);
+      setSaveError(error instanceof Error ? error.message : 'Could not save note');
     } finally {
       setIsSaving(false);
     }
@@ -186,12 +204,14 @@ export function NoteList({
         method: 'DELETE',
       });
 
+      if (!response.ok) throw new Error('Could not delete note');
       if (response.ok) {
         setNotes(notes.filter(n => n.id !== noteId));
         onNoteDeleted?.(noteId);
       }
     } catch (error) {
       console.error('Failed to delete note:', error);
+      setSaveError('Could not delete note. Please try again.');
     }
   };
 
@@ -199,6 +219,7 @@ export function NoteList({
     setEditingId(note.id);
     setEditContent(note.content);
     setEditPage(note.page?.toString() || '');
+    setEditQuote(note.isQuote ?? isQuoteContent(note.content));setEditPublic(!!note.isPublic);setEditTags(note.tags || '');
   };
 
   const isQuoteContent = (content: string) => {
@@ -207,6 +228,7 @@ export function NoteList({
 
   return (
     <div className="space-y-4">
+      {saveError && <p role="alert" className="text-red-600">{saveError}</p>}
       {/* Add Note Button/Form */}
       {isAuthenticated && (
         <div>
@@ -245,6 +267,9 @@ export function NoteList({
                   className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[100px] resize-none"
                   autoFocus
                 />
+                <label className="block text-sm">Tags<input aria-label="Note tags" value={tags} onChange={e=>setTags(e.target.value)} placeholder="ideas, leadership" className="w-full p-2 border rounded bg-background" /></label>
+                {isQuote && <label className="flex gap-2 text-sm"><input type="checkbox" checked={isPublic} onChange={e=>setIsPublic(e.target.checked)} />Share this quote publicly</label>}
+                <p className="text-xs text-muted-foreground">Notes are private. Quotes are private unless you choose to share them.</p>
                 
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
@@ -345,7 +370,7 @@ export function NoteList({
       ) : (
         <div className="space-y-3">
           {notes.map((note) => {
-            const isQuoteNote = isQuoteContent(note.content);
+            const isQuoteNote = note.isQuote ?? isQuoteContent(note.content);
             const isEditing = editingId === note.id;
 
             return (
@@ -358,6 +383,9 @@ export function NoteList({
                 <CardContent className="p-4">
                   {isEditing ? (
                     <div className="space-y-3">
+                      <label className="block text-sm">Tags<input value={editTags} onChange={e=>setEditTags(e.target.value)} className="w-full p-2 border rounded bg-background" /></label>
+                      <label className="flex gap-2 text-sm"><input type="checkbox" checked={editQuote} onChange={e=>setEditQuote(e.target.checked)} />This is a quote</label>
+                      {editQuote && <label className="flex gap-2 text-sm"><input type="checkbox" checked={editPublic} onChange={e=>setEditPublic(e.target.checked)} />Share this quote publicly</label>}
                       <textarea
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}

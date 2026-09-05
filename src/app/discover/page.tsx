@@ -5,6 +5,7 @@ import { Sparkles, BookOpen, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { AdminOnly } from '@/components/auth/admin-only';
 import { buttonVariants } from '@/components/ui/button';
+import { NextBook } from '@/components/books/next-book';
 
 export default function DiscoverPage() {
   return (
@@ -68,6 +69,7 @@ export default function DiscoverPage() {
           </div>
         }
       >
+        <NextBook />
         <AIRecommendations />
       </AdminOnly>
 

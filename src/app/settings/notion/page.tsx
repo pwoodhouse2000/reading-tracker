@@ -33,7 +33,7 @@ export default function NotionSettingsPage() {
     fetchLastImport();
   }, []);
 
-  const fetchDatabases = async () => {
+  async function fetchDatabases() {
     setLoadingDatabases(true);
     try {
       const response = await fetch('/api/notion/databases');
@@ -53,7 +53,7 @@ export default function NotionSettingsPage() {
     }
   };
 
-  const fetchLastImport = async () => {
+  async function fetchLastImport() {
     try {
       const response = await fetch('/api/notion/import');
       const data = await response.json();

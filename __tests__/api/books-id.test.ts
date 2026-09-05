@@ -34,6 +34,7 @@ const params = (id = 'b1') => ({ params: Promise.resolve({ id }) });
 
 beforeEach(() => {
   jest.clearAllMocks();
+  bookFindUnique.mockResolvedValue({id:'b1', dateStarted:null, dateFinished:null, totalPages:null});
   mockRequireAuth.mockResolvedValue(null);
 });
 
