@@ -28,7 +28,7 @@ interface Book {
   id: string;
   title: string;
   author: string;
-  status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED';
+  status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED' | 'DNF';
   mediaTypes: string;
   category: 'FICTION' | 'NON_FICTION';
   subCategory?: string | null;

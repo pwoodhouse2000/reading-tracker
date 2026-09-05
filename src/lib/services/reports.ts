@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { historyBooks } from './reading-history';
 
 export interface ReadingStats {
   total: number;
@@ -70,7 +71,7 @@ export async function getBestBooks(
     whereClause.subCategory = filters.subCategory;
   }
 
-  return await prisma.book.findMany({
+  return await historyBooks({
     where: whereClause,
     orderBy: [
       { rating: 'desc' },
@@ -120,7 +121,7 @@ export async function getReadingStats(filters: ReportFilters): Promise<ReadingSt
     whereClause.subCategory = filters.subCategory;
   }
 
-  const books = await prisma.book.findMany({
+  const books = await historyBooks({
     where: whereClause,
   });
 
@@ -194,7 +195,7 @@ export async function getMonthlyReadingCounts(filters: ReportFilters): Promise<M
     whereClause.subCategory = filters.subCategory;
   }
 
-  const books = await prisma.book.findMany({
+  const books = await historyBooks({
     where: whereClause,
     select: { dateFinished: true },
     orderBy: { dateFinished: 'asc' },
@@ -254,7 +255,7 @@ export async function getMonthlyReadingCounts(filters: ReportFilters): Promise<M
  * Get reading streak information
  */
 export async function getReadingStreak() {
-  const books = await prisma.book.findMany({
+  const books = await historyBooks({
     where: {
       status: 'FINISHED',
       dateFinished: { not: null },
@@ -317,7 +318,7 @@ export async function getTopAuthorsWithFilters(filters: ReportFilters, limit = 5
     whereClause.subCategory = filters.subCategory;
   }
 
-  const books = await prisma.book.findMany({
+  const books = await historyBooks({
     where: whereClause,
     select: { author: true },
   });

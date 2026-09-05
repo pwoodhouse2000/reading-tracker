@@ -474,6 +474,7 @@ export function BookForm({ book, mode, prefill }: BookFormProps) {
                 <option value="READING">📖 Reading</option>
                 <option value="PAUSED">⏸️ Paused</option>
                 <option value="FINISHED">✅ Finished</option>
+                <option value="DNF">⏹️ Did not finish</option>
               </select>
             </div>
 
@@ -614,7 +615,7 @@ export function BookForm({ book, mode, prefill }: BookFormProps) {
 
           <div>
             <label className="block text-sm font-semibold mb-2 text-foreground">
-              My Thoughts
+              My Thoughts (private)
             </label>
             <textarea
               name="thoughts"

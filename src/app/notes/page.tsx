@@ -22,6 +22,9 @@ interface Note {
   content: string;
   page: number | null;
   createdAt: string;
+  tags?: string;
+  isQuote?: boolean;
+  isPublic?: boolean;
   book: {
     id: string;
     title: string;
@@ -37,19 +40,20 @@ export default function NotesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'quotes' | 'notes'>('all');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchNotes();
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     let filtered = notes;
 
     // Filter by type
     if (filter === 'quotes') {
-      filtered = filtered.filter(n => isQuote(n.content));
+      filtered = filtered.filter(n => n.isQuote ?? isQuote(n.content));
     } else if (filter === 'notes') {
-      filtered = filtered.filter(n => !isQuote(n.content));
+      filtered = filtered.filter(n => !(n.isQuote ?? isQuote(n.content)));
     }
 
     // Filter by search
@@ -58,21 +62,23 @@ export default function NotesPage() {
       filtered = filtered.filter(n => 
         n.content.toLowerCase().includes(query) ||
         n.book.title.toLowerCase().includes(query) ||
-        n.book.author.toLowerCase().includes(query)
+        n.book.author.toLowerCase().includes(query) || n.tags?.toLowerCase().includes(query)
       );
     }
 
     setFilteredNotes(filtered);
   }, [notes, searchQuery, filter]);
 
-  const fetchNotes = async () => {
+  async function fetchNotes() {
     try {
       const response = await fetch('/api/notes');
+      if (!response.ok) throw new Error('Could not load notes. Please try again.');
       const data = await response.json();
       setNotes(data);
       setFilteredNotes(data);
     } catch (error) {
       console.error('Failed to fetch notes:', error);
+      setError('Could not load notes. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +100,7 @@ export default function NotesPage() {
     }
   };
 
-  const isQuote = (content: string) => {
+  function isQuote(content: string) {
     return content.startsWith('"') || content.startsWith('"') || content.startsWith('「');
   };
 
@@ -120,6 +126,9 @@ export default function NotesPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {error && <p role="alert">{error}<Button onClick={fetchNotes}>Retry</Button></p>}
+      {isAuthenticated && <a href="/api/notes/export" download className="inline-flex border rounded-lg px-4 py-2">Export Markdown / Obsidian</a>}
+      {notes.some(n=>n.isQuote) && (()=>{const quotes=notes.filter(n=>n.isQuote);const note=quotes[Math.floor(Date.now()/86400000)%quotes.length];return <aside className="p-6 rounded-2xl bg-amber-50 dark:bg-amber-950 border border-amber-200"><h2 className="font-semibold">A quote to revisit today</h2><blockquote className="mt-3 whitespace-pre-wrap">{note.content}</blockquote><Link className="underline text-sm" href={`/books/${note.book.id}#notes`}>{note.book.title}</Link></aside>;})()}
       {/* Header */}
       <div>
         <h1 className="text-4xl font-bold">Notes & Quotes</h1>
@@ -136,7 +145,7 @@ export default function NotesPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search notes, quotes, books, or authors..."
+            placeholder="Search notes, quotes, books, authors, or tags..."
             className="w-full pl-12 pr-12 py-3 bg-white dark:bg-gray-800 border-2 border-transparent rounded-xl shadow-sm focus:border-primary focus:ring-0 transition-all text-base"
           />
           {searchQuery && (
@@ -169,7 +178,7 @@ export default function NotesPage() {
             }`}
           >
             <Quote className="h-4 w-4" />
-            Quotes ({notes.filter(n => isQuote(n.content)).length})
+            Quotes ({notes.filter(n => n.isQuote ?? isQuote(n.content)).length})
           </button>
           <button
             onClick={() => setFilter('notes')}
@@ -180,7 +189,7 @@ export default function NotesPage() {
             }`}
           >
             <FileText className="h-4 w-4" />
-            Notes ({notes.filter(n => !isQuote(n.content)).length})
+            Notes ({notes.filter(n => !(n.isQuote ?? isQuote(n.content))).length})
           </button>
         </div>
       </div>
@@ -244,7 +253,7 @@ export default function NotesPage() {
               {/* Notes List */}
               <div className="space-y-3 pl-16">
                 {bookNotes.map((note) => {
-                  const isQuoteNote = isQuote(note.content);
+                  const isQuoteNote = note.isQuote ?? isQuote(note.content);
                   
                   return (
                     <Card 
@@ -266,6 +275,7 @@ export default function NotesPage() {
                             </p>
                             
                             <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+                              <span>{note.isPublic ? 'Shared quote' : 'Private'}{note.tags ? ` · ${note.tags}` : ''}</span>
                               {note.page && (
                                 <span className="flex items-center gap-1">
                                   <BookOpen className="h-3 w-3" />

@@ -12,7 +12,7 @@ interface Book {
   id: string;
   title: string;
   author: string;
-  status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED';
+  status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED' | 'DNF';
   mediaTypes: string;
   category: 'FICTION' | 'NON_FICTION';
   subCategory?: string | null;
@@ -21,6 +21,7 @@ interface Book {
   summary: string | null;
   createdAt: Date | string;
   priority: number | null;
+  dateFinished?: Date | string | null;
 }
 
 interface BookListProps {
@@ -29,6 +30,7 @@ interface BookListProps {
   initialCategory?: string;
   initialSubCategory?: string;
   initialSearch?: string;
+  initialYear?: string;
 }
 
 const statusFilters = [
@@ -38,6 +40,7 @@ const statusFilters = [
   { label: 'To Read', value: 'TO_READ', emoji: '📋' },
   { label: 'Paused', value: 'PAUSED', emoji: '⏸️' },
   { label: 'Finished', value: 'FINISHED', emoji: '✅' },
+  { label: 'Did not finish', value: 'DNF', emoji: '⏹️' },
 ] as const;
 
 const statusOrder = {
@@ -46,6 +49,7 @@ const statusOrder = {
   'TO_READ': 3,
   'PAUSED': 4,
   'FINISHED': 5,
+  'DNF': 6,
 };
 
 // Statuses where drag-and-drop reordering makes sense
@@ -56,7 +60,8 @@ export function BookList({
   initialStatus,
   initialCategory,
   initialSubCategory,
-  initialSearch 
+  initialSearch,
+  initialYear
 }: BookListProps) {
   const { isAuthenticated } = useAuth();
   const hasUrlFilters = !!(initialStatus || initialCategory || initialSubCategory);
@@ -70,6 +75,31 @@ export function BookList({
   const [searchQuery, setSearchQuery] = useState(initialSearch || '');
   const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
   const [reorderMode, setReorderMode] = useState(false);
+  const [yearFilter, setYearFilter] = useState(initialYear || '');
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    const restore = () => {
+      const p = new URLSearchParams(window.location.search);
+      setStatusFilter(p.get('status'));
+      setCategoryFilter(p.get('category'));
+      setSubCategoryFilter(p.get('subCategory'));
+      setSearchQuery(p.get('search') || '');
+      setYearFilter(p.get('year') || '');
+      setViewMode(p.get('view') === 'compact' ? 'compact' : 'grid');
+      setSortBy((['title','author','rating','recent','priority'].includes(p.get('sort') || '') ? p.get('sort') : 'priority') as typeof sortBy);
+      setGroupByStatus(p.has('group') ? p.get('group') === 'true' : !p.get('status'));
+      setRestored(true);
+    };
+    restore();
+    window.addEventListener('popstate', restore);
+    return () => window.removeEventListener('popstate', restore);
+  }, []);
+  useEffect(() => {
+    if (!restored) return;
+    const p = new URLSearchParams();
+    for (const [k,v] of Object.entries({status:statusFilter,category:categoryFilter,subCategory:subCategoryFilter,search:searchQuery,year:yearFilter,view:viewMode,sort:sortBy,group:String(groupByStatus)})) if (v) p.set(k,v);
+    window.history.replaceState(null, '', `/books?${p}`);
+  }, [restored,statusFilter,categoryFilter,subCategoryFilter,searchQuery,yearFilter,viewMode,sortBy,groupByStatus]);
 
   // Enable reorder mode only when viewing a single reorderable status
   const canReorder = isAuthenticated && 
@@ -122,6 +152,7 @@ export function BookList({
       );
     });
 
+    if (yearFilter) filtered = filtered.filter(book => book.dateFinished && new Date(book.dateFinished).getUTCFullYear() === Number(yearFilter));
     if (statusFilter) {
       filtered = filtered.filter((book) => book.status === statusFilter);
     }
@@ -178,7 +209,7 @@ export function BookList({
     });
 
     return { grouped: true, booksByStatus: grouped };
-  }, [books, statusFilter, categoryFilter, subCategoryFilter, groupByStatus, sortBy, searchQuery]);
+  }, [books, statusFilter, categoryFilter, subCategoryFilter, groupByStatus, sortBy, searchQuery, yearFilter]);
 
   const totalFiltered = sortedAndGroupedBooks.grouped
     ? Object.values(sortedAndGroupedBooks.booksByStatus || {}).flat().length
@@ -191,6 +222,7 @@ export function BookList({
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
         <input
           type="text"
+          aria-label="Search library"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by title, author, or keywords..."
@@ -214,7 +246,8 @@ export function BookList({
             {statusFilters.map((filter) => (
               <button
                 key={filter.label}
-                onClick={() => setStatusFilter(filter.value)}
+                onClick={() => { setStatusFilter(filter.value); if (filter.value !== 'FINISHED') setYearFilter(''); }}
+                aria-pressed={statusFilter === filter.value}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 ${
                   statusFilter === filter.value
                     ? 'bg-primary text-primary-foreground shadow-md scale-105'
@@ -226,7 +259,7 @@ export function BookList({
               </button>
             ))}
           </div>
-          <Button
+          {isAuthenticated && <Button
             onClick={handleEnrich}
             disabled={enriching}
             variant="outline"
@@ -234,7 +267,7 @@ export function BookList({
           >
             <Sparkles className={`h-4 w-4 mr-2 ${enriching ? 'animate-pulse' : ''}`} />
             {enriching ? 'Enriching...' : 'Add Covers & Summaries'}
-          </Button>
+          </Button>}
         </div>
 
         {/* Sort and View Controls */}
@@ -244,6 +277,9 @@ export function BookList({
               <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Group by Status</label>
               <button
                 onClick={() => setGroupByStatus(!groupByStatus)}
+                role="switch"
+                aria-label="Group by status"
+                aria-checked={groupByStatus}
                 className={`w-12 h-6 rounded-full transition-all relative ${
                   groupByStatus ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
@@ -292,6 +328,8 @@ export function BookList({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('grid')}
+              aria-label="Grid view"
+              aria-pressed={viewMode === 'grid'}
               className={`p-2 rounded-lg transition-all ${
                 viewMode === 'grid'
                   ? 'bg-primary text-primary-foreground'
@@ -302,6 +340,8 @@ export function BookList({
             </button>
             <button
               onClick={() => setViewMode('compact')}
+              aria-label="Compact view"
+              aria-pressed={viewMode === 'compact'}
               className={`p-2 rounded-lg transition-all ${
                 viewMode === 'compact'
                   ? 'bg-primary text-primary-foreground'
@@ -331,6 +371,12 @@ export function BookList({
       </div>
 
       {/* Books Display */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <label>Category <select aria-label="Filter category" className="bg-background border rounded-lg p-2" value={categoryFilter || ''} onChange={e=>{setCategoryFilter(e.target.value || null);setSubCategoryFilter(null);}}><option value="">All</option><option value="FICTION">Fiction</option><option value="NON_FICTION">Non-Fiction</option></select></label>
+        <label>Finished year <input aria-label="Finished year" className="bg-background border rounded-lg p-2 w-24" type="number" min="1900" max="2200" value={yearFilter} onChange={e=>setYearFilter(e.target.value)} /></label>
+        <Button variant="ghost" onClick={()=>{setStatusFilter(null);setCategoryFilter(null);setSubCategoryFilter(null);setYearFilter('');setSearchQuery('');}}>Clear all filters</Button>
+        <span role="status">{totalFiltered} books</span>
+      </div>
       {totalFiltered === 0 ? (
         <div className="text-center py-24 bg-white/60 dark:bg-gray-800/60 backdrop-blur rounded-2xl">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 mb-6">

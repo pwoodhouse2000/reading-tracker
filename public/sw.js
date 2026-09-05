@@ -1,5 +1,5 @@
-const CACHE_NAME = 'reading-tracker-v3';
-const API_CACHE = 'reading-tracker-api-v2';
+const CACHE_NAME = 'reading-tracker-v4';
+const API_CACHE = 'reading-tracker-api-v3';
 const STATIC_ASSETS = [
   '/',
   '/icons/icon.svg?v=20260724',
@@ -26,7 +26,7 @@ function responseCanBeCached(response) {
 }
 
 function isPrivatePage(url) {
-  return url.pathname === '/login'
+  return url.pathname === '/books' || url.pathname.startsWith('/books/') || url.pathname.startsWith('/authors/') || url.pathname === '/login'
     || url.pathname === '/notes'
     || url.pathname.startsWith('/settings')
     || url.pathname === '/books/new'

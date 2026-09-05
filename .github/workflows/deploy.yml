@@ -11,10 +11,17 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
 
       - name: Run tests before deploy
         run: |
           npm ci
+          npx prisma generate
+          npm run lint
+          npm run typecheck
           npx jest --silent
 
       - name: Authenticate to Google Cloud

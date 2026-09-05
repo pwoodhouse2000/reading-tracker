@@ -27,7 +27,7 @@ function isProtectedPath(pathname: string): boolean {
   return false;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Skip if no admin password is configured (check env)

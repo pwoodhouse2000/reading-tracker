@@ -1,6 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-guard';
+import { isAuthenticated } from '@/lib/auth';
+import { privateHeaders } from '@/lib/privacy';
+import { InputError } from '@/lib/book-validation';
+import { validateNote } from '@/lib/note-validation';
 
 // GET /api/notes - List all notes with optional filters
 export async function GET(request: NextRequest) {
@@ -10,6 +14,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
 
     const where: any = {};
+    if (!await isAuthenticated()) { where.isPublic = true; where.isQuote = true; }
 
     if (bookId) {
       where.bookId = bookId;
@@ -36,7 +41,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(notes);
+    return NextResponse.json(notes, { headers: privateHeaders });
   } catch (error) {
     console.error('Error fetching notes:', error);
     return NextResponse.json(
@@ -53,7 +58,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { bookId, content, page, isQuote } = body;
+    const { bookId, content } = body;
+    const data = validateNote(body, true);
+    if (data.isPublic && !data.isQuote) throw new InputError('Only quotes can be shared publicly');
 
     if (!bookId || !content) {
       return NextResponse.json(
@@ -65,8 +72,8 @@ export async function POST(request: NextRequest) {
     const note = await prisma.note.create({
       data: {
         bookId,
-        content,
-        page: page ? parseInt(page) : null,
+        ...data,
+        content: data.content!,
       },
       include: {
         book: {
@@ -81,6 +88,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(note, { status: 201 });
   } catch (error) {
+    if (error instanceof InputError || error instanceof SyntaxError) return NextResponse.json({ error: error.message }, { status: 400 });
     console.error('Error creating note:', error);
     return NextResponse.json(
       { error: 'Failed to create note' },

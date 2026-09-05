@@ -5,6 +5,11 @@ import { BookCard } from '@/components/books/book-card';
 import { Card } from '@/components/ui/card';
 import { BookAddButtonLarge, EmptyStateAddButton } from '@/components/books/admin-actions';
 import { ReadingGoalCard } from '@/components/stats/reading-goal-card';
+import { PageProgress } from '@/components/books/page-progress';
+import { NextBook } from '@/components/books/next-book';
+import { AdminOnly } from '@/components/auth/admin-only';
+import { bookForViewer } from '@/lib/privacy';
+import { historyCount } from '@/lib/services/reading-history';
 import { BookOpen, Clock, CheckCircle2, Library, ArrowRight, Sparkles } from 'lucide-react';
 
 // Force dynamic rendering - database queries at runtime, not build time
@@ -18,16 +23,15 @@ export default async function Home() {
     totalBooks,
     recentBooks,
     currentBooks,
+    nextBooks,
   ] = await Promise.all([
     prisma.book.count({ where: { status: 'READING' } }),
     prisma.book.count({ where: { status: 'TO_READ' } }),
-    prisma.book.count({
-      where: {
+    historyCount({
         status: 'FINISHED',
         dateFinished: {
           gte: new Date(new Date().getFullYear(), 0, 1),
         },
-      },
     }),
     prisma.book.count(),
     prisma.book.findMany({
@@ -36,8 +40,9 @@ export default async function Home() {
     }),
     prisma.book.findMany({
       where: { status: 'READING' },
-      take: 3,
+      orderBy: { priority: 'asc' },
     }),
+    prisma.book.findMany({ where:{status:'NEXT_UP'},orderBy:{priority:'asc'},take:6 }),
   ]);
 
   return (
@@ -46,14 +51,13 @@ export default async function Home() {
       <section className="relative py-12">
         <div className="max-w-4xl">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground leading-[1.1]">
-            Your Reading
-            <span className="block gradient-text">Journey Awaits</span>
+            Your reading,
+            <span className="block gradient-text">right where you left it.</span>
           </h1>
           <p className="text-xl text-muted-foreground mt-6 max-w-2xl leading-relaxed">
-            Track every book, discover new favorites, and celebrate your reading milestones. 
-            Your personal library, beautifully organized.
+            Pick up a current read, record a little progress, or find your next book.
           </p>
-          <div className="flex gap-4 mt-8">
+          <div className="flex flex-wrap gap-4 mt-8">
             <BookAddButtonLarge />
             <Link href="/books">
               <Button size="lg" variant="outline">
@@ -112,7 +116,7 @@ export default async function Home() {
               </Card>
             </Link>
 
-            <Link href={`/books?status=FINISHED&year=${new Date().getFullYear()}`}>
+            <Link href="/reports">
               <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-xl shadow-emerald-500/20 hover:shadow-2xl hover:shadow-emerald-500/30 transition-all hover:-translate-y-1 cursor-pointer h-full">
                 <div className="p-5">
                   <div className="flex items-start justify-between">
@@ -160,13 +164,15 @@ export default async function Home() {
           </div>
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {currentBooks.map((book) => (
-              <BookCard key={book.id} book={book} />
+              <div key={book.id} className="rounded-xl border p-3 bg-card space-y-3"><BookCard book={bookForViewer(book)} compact /><div className="p-2"><PageProgress bookId={book.id} currentPage={book.currentPage} totalPages={book.totalPages} />{book.audioMinutes!==null&&<p className="mt-2 text-sm">{book.audioMinutes} / {book.totalAudioMinutes??'?'} minutes listened</p>}{book.progressPercent!==null&&<p className="text-sm">{book.progressPercent}% complete</p>}</div></div>
             ))}
           </div>
         </section>
       )}
 
       {/* Recently Added */}
+      <AdminOnly><NextBook /></AdminOnly>
+      {nextBooks.length > 0 && <section><div className="flex justify-between items-center mb-6"><h2 className="text-3xl font-bold">Next Up</h2><Link className="text-primary underline" href="/books?status=NEXT_UP">View queue</Link></div><div className="grid gap-6 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">{nextBooks.map(book=><BookCard key={book.id} book={bookForViewer(book)} />)}</div></section>}
       {recentBooks.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-6">
@@ -183,7 +189,7 @@ export default async function Home() {
           </div>
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {recentBooks.map((book) => (
-              <BookCard key={book.id} book={book} />
+              <BookCard key={book.id} book={bookForViewer(book)} />
             ))}
           </div>
         </section>

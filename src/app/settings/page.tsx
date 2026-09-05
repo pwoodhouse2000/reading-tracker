@@ -6,6 +6,7 @@ import { Download, FileText, Shield, ChevronRight, Sparkles, Database, Code2, Sh
 export default function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8">
+      <Link href="/settings/library" className="block border rounded-xl p-5 hover:bg-muted"><strong>Library cleanup</strong><p>Review duplicates, category suggestions, and edit categories in bulk.</p></Link>
       <div>
         <h1 className="text-4xl font-bold">Settings</h1>
         <p className="text-muted-foreground mt-2 text-lg">

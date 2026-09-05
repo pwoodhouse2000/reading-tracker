@@ -5,6 +5,7 @@
 
 jest.mock('@/lib/prisma', () => ({
   prisma: {
+    readingSession: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0) },
     book: {
       findMany: jest.fn(),
       count: jest.fn(),

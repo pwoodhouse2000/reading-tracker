@@ -1,6 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-guard';
+import { isAuthenticated } from '@/lib/auth';
+import { privateHeaders } from '@/lib/privacy';
+import { InputError } from '@/lib/book-validation';
+import { validateNote } from '@/lib/note-validation';
 
 // GET /api/notes/[id] - Get single note
 export async function GET(
@@ -24,14 +28,14 @@ export async function GET(
       },
     });
 
-    if (!note) {
+    if (!note || (!(note.isPublic && note.isQuote) && !await isAuthenticated())) {
       return NextResponse.json(
         { error: 'Note not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(note);
+    return NextResponse.json(note, { headers: privateHeaders });
   } catch (error) {
     console.error('Error fetching note:', error);
     return NextResponse.json(
@@ -52,13 +56,14 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
+    const data = validateNote(body);
+    const existing = await prisma.note.findUnique({ where:{id} });
+    if (!existing) return NextResponse.json({error:'Note not found'}, {status:404});
+    if (data.isPublic && !(data.isQuote ?? existing.isQuote)) throw new InputError('Only quotes can be shared publicly');
 
     const note = await prisma.note.update({
       where: { id },
-      data: {
-        content: body.content,
-        page: body.page !== undefined ? (body.page ? parseInt(body.page) : null) : undefined,
-      },
+      data,
       include: {
         book: {
           select: {
@@ -72,6 +77,7 @@ export async function PATCH(
 
     return NextResponse.json(note);
   } catch (error) {
+    if (error instanceof InputError || error instanceof SyntaxError) return NextResponse.json({ error: error.message }, { status: 400 });
     console.error('Error updating note:', error);
     return NextResponse.json(
       { error: 'Failed to update note' },

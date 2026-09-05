@@ -56,6 +56,7 @@ function req(url: string, body?: unknown): any {
 describe('Notes API', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    notesFindUnique.mockResolvedValue(sampleNote);
     mockRequireAuth.mockResolvedValue(null);
   });
 

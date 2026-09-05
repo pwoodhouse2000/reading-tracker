@@ -37,3 +37,9 @@ Thumbs.db
 # Misc
 README.md
 .claude
+backups
+test-results
+playwright-report
+e2e
+__tests__
+.e2e.db*

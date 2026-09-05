@@ -11,7 +11,7 @@ interface Book {
   id: string;
   title: string;
   author: string;
-  status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED';
+  status: 'TO_READ' | 'NEXT_UP' | 'READING' | 'PAUSED' | 'FINISHED' | 'DNF';
   mediaTypes: string;
   category: 'FICTION' | 'NON_FICTION';
   subCategory?: string | null;
@@ -48,6 +48,8 @@ export function SwipeableBookCard({ book }: SwipeableBookCardProps) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const [offset, setOffset] = useState(0);
+  const [error, setError] = useState('');
+  const busy = useRef(false);
   const [isSwiping, setIsSwiping] = useState(false);
   const [showRatingPrompt, setShowRatingPrompt] = useState(false);
   const [currentRating, setCurrentRating] = useState(book.rating);
@@ -95,6 +97,9 @@ export function SwipeableBookCard({ book }: SwipeableBookCardProps) {
   const advanceStatus = useCallback(async () => {
     const target = nextStatus[book.status];
     if (!target) return;
+    if (busy.current) return;
+    busy.current = true;
+    setError('');
 
     try {
       const response = await fetch(`/api/books/${book.id}`, {
@@ -103,6 +108,7 @@ export function SwipeableBookCard({ book }: SwipeableBookCardProps) {
         body: JSON.stringify({ status: target }),
       });
 
+      if (!response.ok) throw new Error('Could not save status. Please try again.');
       if (response.ok) {
         if (target === 'FINISHED') {
           setShowRatingPrompt(true);
@@ -111,6 +117,9 @@ export function SwipeableBookCard({ book }: SwipeableBookCardProps) {
       }
     } catch (error) {
       console.error('Failed to advance status:', error);
+      setError('Could not save status. Please try again.');
+    } finally {
+      busy.current = false;
     }
   }, [book.id, book.status, router]);
 
@@ -137,17 +146,20 @@ export function SwipeableBookCard({ book }: SwipeableBookCardProps) {
   }, [offset, book.id, book.status, advanceStatus, router]);
 
   const handleRatingChange = useCallback(async (rating: number) => {
-    setCurrentRating(rating);
+    setError('');
     try {
-      await fetch(`/api/books/${book.id}`, {
+      const response = await fetch(`/api/books/${book.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating }),
       });
+      if (!response.ok) throw new Error('Rating was not saved');
+      setCurrentRating(rating);
+      setShowRatingPrompt(false);
     } catch (error) {
       console.error('Failed to update rating:', error);
+      setError('Rating was not saved. Please try again.');
     }
-    setShowRatingPrompt(false);
     router.refresh();
   }, [book.id, router]);
 
@@ -162,6 +174,7 @@ export function SwipeableBookCard({ book }: SwipeableBookCardProps) {
 
   return (
     <div className="relative overflow-hidden rounded-xl">
+      {error && <p role="alert" className="p-3 text-red-600">{error}</p>}
       {/* Swipe-right background: advance status */}
       {offset > 0 && (
         <div
@@ -203,7 +216,7 @@ export function SwipeableBookCard({ book }: SwipeableBookCardProps) {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
+        onTouchCancel={() => { touchState.current = null; setOffset(0); setIsSwiping(false); }}
         style={{
           transform: offset ? `translateX(${offset}px)` : undefined,
           transition: isSwiping ? 'none' : 'transform 0.2s ease-out',

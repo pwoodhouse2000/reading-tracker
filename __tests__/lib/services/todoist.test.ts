@@ -55,6 +55,12 @@ afterEach(() => {
 
 // =============================================================================
 describe('getTodoistProjects', () => {
+  it('follows the API v1 cursor through all projects', async () => {
+    mockFetch.mockResolvedValueOnce({ok:true,json:async()=>({results:[{id:'p1',name:'One'}],next_cursor:'page-two'})});
+    mockFetch.mockResolvedValueOnce({ok:true,json:async()=>({results:[{id:'p2',name:'Two'}],next_cursor:null})});
+    expect(await getTodoistProjects('token')).toEqual([{id:'p1',name:'One'},{id:'p2',name:'Two'}]);
+    expect(mockFetch.mock.calls[1][0]).toBe('https://api.todoist.com/api/v1/projects?cursor=page-two');
+  });
   it('maps projects to id/name', async () => {
     mockFetch.mockResolvedValue({
       ok: true,

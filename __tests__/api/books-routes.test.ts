@@ -66,6 +66,7 @@ function makeReq(url: string, body?: unknown, method = 'GET'): NextRequest {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockBook.findUnique.mockResolvedValue({id:'book-1',dateStarted:null,dateFinished:null,totalPages:null});
   mockRequireAuth.mockResolvedValue(null);
 });
 

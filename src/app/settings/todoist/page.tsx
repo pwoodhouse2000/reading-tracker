@@ -43,7 +43,7 @@ export default function TodoistSettingsPage() {
     fetchLastSync();
   }, []);
 
-  const fetchProjects = async () => {
+  async function fetchProjects() {
     setLoadingProjects(true);
     try {
       const response = await fetch('/api/todoist/projects');
@@ -63,7 +63,7 @@ export default function TodoistSettingsPage() {
     }
   };
 
-  const fetchLastSync = async () => {
+  async function fetchLastSync() {
     try {
       const response = await fetch('/api/todoist/sync');
       const data = await response.json();

@@ -19,9 +19,10 @@ export function PageProgress({ bookId, currentPage, totalPages }: PageProgressPr
   const [total, setTotal] = useState<number | ''>(totalPages ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState('');
 
   const percent =
-    currentPage && totalPages && totalPages > 0
+    currentPage !== null && totalPages && totalPages > 0
       ? Math.min(100, Math.round((currentPage / totalPages) * 100))
       : null;
 
@@ -33,6 +34,8 @@ export function PageProgress({ bookId, currentPage, totalPages }: PageProgressPr
   };
 
   const handleSave = async () => {
+    setError('');
+    if (page !== '' && total !== '' && page > total) { setError('Current page cannot exceed total pages'); return; }
     setIsSaving(true);
     try {
       const response = await fetch(`/api/books/${bookId}`, {
@@ -44,18 +47,21 @@ export function PageProgress({ bookId, currentPage, totalPages }: PageProgressPr
         }),
       });
 
+      if (!response.ok) throw new Error('Could not save progress. Please try again.');
       if (response.ok) {
         setIsEditing(false);
         router.refresh();
       }
     } catch (error) {
       console.error('Failed to update page progress:', error);
+      setError('Could not save progress. Please try again.');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleClear = async () => {
+    setError('');
     setIsSaving(true);
     try {
       const response = await fetch(`/api/books/${bookId}`, {
@@ -64,6 +70,7 @@ export function PageProgress({ bookId, currentPage, totalPages }: PageProgressPr
         body: JSON.stringify({ currentPage: null }),
       });
 
+      if (!response.ok) throw new Error('Could not clear progress');
       if (response.ok) {
         setPage('');
         setIsEditing(false);
@@ -71,6 +78,7 @@ export function PageProgress({ bookId, currentPage, totalPages }: PageProgressPr
       }
     } catch (error) {
       console.error('Failed to clear page progress:', error);
+      setError('Could not clear progress. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -78,8 +86,9 @@ export function PageProgress({ bookId, currentPage, totalPages }: PageProgressPr
 
   return (
     <div className="space-y-4">
+      {error && <p role="alert" className="text-red-600">{error}</p>}
       {/* Progress display */}
-      {currentPage ? (
+      {currentPage !== null ? (
         <div className="space-y-2">
           <div className="flex items-baseline justify-between">
             <p className="text-2xl font-bold text-foreground">

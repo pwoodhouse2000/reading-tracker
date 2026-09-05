@@ -1,0 +1,30 @@
+name: Checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: file:${{ github.workspace }}/.e2e.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test -- --runInBand
+      - run: node scripts/check-migration.mjs
+      - run: npm audit --audit-level=high
+      - run: npm run build
+      - run: npx prisma migrate deploy
+      - run: node scripts/seed-e2e.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

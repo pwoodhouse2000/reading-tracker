@@ -12,6 +12,9 @@ import { NoteList } from '@/components/notes/note-list';
 import { ArrowLeft, BookOpen, Headphones, Tablet, Calendar, Clock, Sparkles, Quote, BookMarked } from 'lucide-react';
 import { PageProgress } from '@/components/books/page-progress';
 import { parseMediaTypes } from '@/lib/constants';
+import { isAuthenticated } from '@/lib/auth';
+import { bookForViewer } from '@/lib/privacy';
+import { ReadingControls } from '@/components/books/reading-controls';
 
 interface BookDetailPageProps {
   params: Promise<{ id: string }>;
@@ -40,14 +43,15 @@ function getTitleGradient(title: string): string {
 export default async function BookDetailPage({ params }: BookDetailPageProps) {
   const { id } = await params;
 
-  const book = await prisma.book.findUnique({
+  const storedBook = await prisma.book.findUnique({
     where: { id },
-    include: { notes: true },
+    include: { notes: true, readingSessions: { orderBy: { createdAt: 'desc' } } },
   });
 
-  if (!book) {
+  if (!storedBook) {
     notFound();
   }
+  const book = bookForViewer(storedBook, await isAuthenticated());
 
   const mediaTypesArray = parseMediaTypes(book.mediaTypes);
 
@@ -68,6 +72,7 @@ export default async function BookDetailPage({ params }: BookDetailPageProps) {
       <div className="grid lg:grid-cols-[300px_1fr] gap-8">
         {/* Left Column - Cover */}
         <div className="space-y-4">
+          <ReadingControls book={{ id:book.id, status:book.status, audioMinutes:book.audioMinutes, totalAudioMinutes:book.totalAudioMinutes, progressPercent:book.progressPercent, mediaTypes:book.mediaTypes, readingSessions:book.readingSessions }} />
           <div className="relative aspect-[2/3] w-full rounded-2xl overflow-hidden shadow-2xl">
             {book.coverImageUrl ? (
               <Image
